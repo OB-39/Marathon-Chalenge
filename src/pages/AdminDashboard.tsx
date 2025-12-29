@@ -152,7 +152,7 @@ const AdminDashboard: React.FC = () => {
                 .order('created_at', { ascending: true });
             if (error) throw error;
             setSubmissions(data || []);
-        } catch (error: any) {
+        } catch (error) {
             console.error('❌ Error fetching submissions:', error);
         } finally {
             setLoading(false);
@@ -173,17 +173,20 @@ const AdminDashboard: React.FC = () => {
                 .eq('id', selectedSubmission.id);
             if (submissionError) throw submissionError;
 
+            const targetUserId = selectedSubmission.user_id;
+
             // Only update points if there's a change
             if (pointAdjustment !== 0) {
                 await supabase.rpc('increment_points', {
-                    user_id: selectedSubmission.user_id,
+                    user_id: targetUserId,
                     points: pointAdjustment,
-                }).catch(async () => {
-                    const { data: cp } = await supabase.from('profiles').select('total_points').eq('id', selectedSubmission.user_id).single();
+                }).catch(async (rpcError: any) => {
+                    console.warn('RPC increment_points failed, falling back to manual update', rpcError);
+                    const { data: cp } = await supabase.from('profiles').select('total_points').eq('id', targetUserId).single();
                     if (cp) {
                         await supabase.from('profiles').update({
                             total_points: (cp.total_points || 0) + pointAdjustment
-                        }).eq('id', selectedSubmission.user_id);
+                        }).eq('id', targetUserId);
                     }
                 });
             }
@@ -200,7 +203,7 @@ const AdminDashboard: React.FC = () => {
             fetchSubmissions();
             fetchReviewedSubmissions();
             fetchUsers(); // Refresh users list for points update
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error validating submission:', error);
         } finally {
             setIsLoading(false);
@@ -225,16 +228,19 @@ const AdminDashboard: React.FC = () => {
                 .eq('id', selectedSubmission.id);
             if (error) throw error;
 
+            const targetUserId = selectedSubmission.user_id;
+
             if (pointAdjustment !== 0) {
                 await supabase.rpc('increment_points', {
-                    user_id: selectedSubmission.user_id,
+                    user_id: targetUserId,
                     points: pointAdjustment,
-                }).catch(async () => {
-                    const { data: cp } = await supabase.from('profiles').select('total_points').eq('id', selectedSubmission.user_id).single();
+                }).catch(async (rpcError: any) => {
+                    console.warn('RPC increment_points failed, falling back to manual update', rpcError);
+                    const { data: cp } = await supabase.from('profiles').select('total_points').eq('id', targetUserId).single();
                     if (cp) {
                         await supabase.from('profiles').update({
                             total_points: Math.max(0, (cp.total_points || 0) + pointAdjustment)
-                        }).eq('id', selectedSubmission.user_id);
+                        }).eq('id', targetUserId);
                     }
                 });
             }
@@ -244,7 +250,7 @@ const AdminDashboard: React.FC = () => {
             fetchSubmissions();
             fetchReviewedSubmissions();
             fetchUsers(); // Refresh users list
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error rejecting submission:', error);
         } finally {
             setIsLoading(false);
