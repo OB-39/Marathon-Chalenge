@@ -8,6 +8,7 @@ export interface Profile {
     avatar_url: string | null;
     phone_number?: string | null;
     university?: string | null;
+    preferred_platform?: string | null;
     bio?: string | null;
     linkedin_url?: string | null;
     facebook_url?: string | null;
@@ -27,6 +28,19 @@ export interface Submission {
     status: 'pending' | 'validated' | 'rejected';
     score_awarded: number | null;
     rejection_comment?: string;
+    created_at?: string;
+    updated_at?: string;
+    // Relations
+    profile?: Profile;
+}
+
+export interface Announcement {
+    id: string;
+    ambassador_id: string;
+    title: string;
+    content: string;
+    type: 'announcement' | 'motivation' | 'video' | 'link';
+    url?: string | null;
     created_at?: string;
     updated_at?: string;
     // Relations

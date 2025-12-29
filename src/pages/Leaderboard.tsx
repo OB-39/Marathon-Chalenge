@@ -2,22 +2,39 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { supabase } from '../lib/supabase';
-import type { LeaderboardEntry } from '../types/database';
+import type { LeaderboardEntry, Announcement } from '../types/database';
 import { useAuth } from '../contexts/AuthContext';
 import ProfileDropdown from '../components/ProfileDropdown';
 import EditProfileModal from '../components/EditProfileModal';
-import { Trophy, Medal, Award, User, TrendingUp, LayoutDashboard } from 'lucide-react';
+import { Trophy, Medal, Award, User, TrendingUp, LayoutDashboard, Bell, Flame, Video, Link as LinkIcon, ExternalLink } from 'lucide-react';
 
 const Leaderboard: React.FC = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
     const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+    const [announcements, setAnnouncements] = useState<Announcement[]>([]);
     const [loading, setLoading] = useState(true);
     const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
 
     useEffect(() => {
         fetchLeaderboard();
+        fetchAnnouncements();
     }, []);
+
+    const fetchAnnouncements = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('announcements')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(5);
+
+            if (error) throw error;
+            setAnnouncements(data || []);
+        } catch (error) {
+            console.error('Error fetching announcements:', error);
+        }
+    };
 
     const fetchLeaderboard = async () => {
         try {
@@ -164,6 +181,67 @@ const Leaderboard: React.FC = () => {
 
             {/* Main Content */}
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+                {/* Announcements Section */}
+                {announcements.length > 0 && (
+                    <div className="mb-12">
+                        <div className="flex items-center gap-2 mb-6">
+                            <Bell className="w-5 h-5 text-purple-400" />
+                            <h2 className="text-xl font-bold text-white font-display">Actus & Motivation</h2>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {announcements.map((ann, idx) => (
+                                <motion.div
+                                    key={ann.id}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: idx * 0.1 }}
+                                    className="glass-strong rounded-2xl p-5 border border-white/10 hover:border-purple-500/30 transition-all group relative overflow-hidden"
+                                >
+                                    {/* Type Decorative Icon */}
+                                    <div className="absolute -right-4 -top-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                                        {ann.type === 'announcement' && <Bell className="w-24 h-24" />}
+                                        {ann.type === 'motivation' && <Flame className="w-24 h-24" />}
+                                        {ann.type === 'video' && <Video className="w-24 h-24" />}
+                                        {ann.type === 'link' && <LinkIcon className="w-24 h-24" />}
+                                    </div>
+
+                                    <div className="flex items-center gap-3 mb-3">
+                                        <div className={`p-2 rounded-lg ${ann.type === 'announcement' ? 'bg-blue-500/20 text-blue-400' :
+                                            ann.type === 'motivation' ? 'bg-orange-500/20 text-orange-400' :
+                                                ann.type === 'video' ? 'bg-red-500/20 text-red-400' :
+                                                    'bg-green-500/20 text-green-400'
+                                            }`}>
+                                            {ann.type === 'announcement' && <Bell className="w-4 h-4" />}
+                                            {ann.type === 'motivation' && <Flame className="w-4 h-4" />}
+                                            {ann.type === 'video' && <Video className="w-4 h-4" />}
+                                            {ann.type === 'link' && <LinkIcon className="w-4 h-4" />}
+                                        </div>
+                                        <span className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">
+                                            {ann.type}
+                                        </span>
+                                    </div>
+
+                                    <h4 className="font-bold text-white mb-2 line-clamp-1">{ann.title}</h4>
+                                    <p className="text-sm text-gray-300 line-clamp-2 mb-4 leading-relaxed">
+                                        {ann.content}
+                                    </p>
+
+                                    {ann.url && (
+                                        <a
+                                            href={ann.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-2 text-xs font-bold text-purple-400 hover:text-purple-300 transition-colors"
+                                        >
+                                            En savoir plus
+                                            <ExternalLink className="w-3 h-3" />
+                                        </a>
+                                    )}
+                                </motion.div>
+                            ))}
+                        </div>
+                    </div>
+                )}
                 {loading ? (
                     <div className="space-y-8">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

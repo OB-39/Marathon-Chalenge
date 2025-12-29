@@ -20,7 +20,7 @@ const Onboarding: React.FC = () => {
         email: user?.email || '',
         phoneNumber: '',
         university: '',
-        preferredPlatform: '',
+        preferredPlatforms: [] as string[],
         bio: '',
     });
 
@@ -54,7 +54,7 @@ const Onboarding: React.FC = () => {
         if (!formData.lastName.trim()) newErrors.lastName = 'Le nom est requis';
         if (!formData.phoneNumber.trim()) newErrors.phoneNumber = 'Le numéro de téléphone est requis';
         if (!formData.university.trim()) newErrors.university = "L'université est requise";
-        if (!formData.preferredPlatform) newErrors.preferredPlatform = 'Veuillez choisir un réseau social';
+        if (formData.preferredPlatforms.length === 0) newErrors.preferredPlatforms = 'Veuillez choisir au moins un réseau social';
         if (!photoFile) newErrors.photo = 'La photo de profil est requise';
 
         setErrors(newErrors);
@@ -98,7 +98,7 @@ const Onboarding: React.FC = () => {
                     full_name: `${formData.firstName} ${formData.lastName}`,
                     phone_number: formData.phoneNumber,
                     university: formData.university,
-                    preferred_platform: formData.preferredPlatform,
+                    preferred_platform: formData.preferredPlatforms.join(', '),
                     bio: formData.bio || null,
                     avatar_url: avatarUrl,
                     is_registered: true,
@@ -121,9 +121,10 @@ const Onboarding: React.FC = () => {
             setTimeout(() => {
                 navigate('/dashboard');
             }, 1000);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Erreur lors de l\'inscription:', error);
-            alert('Une erreur est survenue. Veuillez réessayer.');
+            const errorMessage = error.message || 'Une erreur inconnue est survenue';
+            alert(`Erreur lors de l\'inscription : ${errorMessage}. Veuillez vérifier votre connexion et réessayer.`);
         } finally {
             setLoading(false);
         }
@@ -309,7 +310,7 @@ const Onboarding: React.FC = () => {
                             </h2>
 
                             <p className="text-sm text-gray-300 mb-4">
-                                Choisissez le réseau social principal sur lequel vous publierez vos contenus
+                                Choisissez le ou les réseaux sociaux sur lesquels vous publierez vos contenus
                             </p>
 
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -318,33 +319,39 @@ const Onboarding: React.FC = () => {
                                     { value: 'facebook', label: 'Facebook', color: 'bg-blue-500' },
                                     { value: 'twitter', label: 'Twitter', color: 'bg-sky-500' },
                                     { value: 'instagram', label: 'Instagram', color: 'bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500' },
-                                ].map((platform) => (
-                                    <button
-                                        key={platform.value}
-                                        type="button"
-                                        onClick={() =>
-                                            setFormData({ ...formData, preferredPlatform: platform.value })
-                                        }
-                                        className={`relative p-4 rounded-xl border-2 transition-all ${formData.preferredPlatform === platform.value
+                                ].map((platform) => {
+                                    const isSelected = formData.preferredPlatforms.includes(platform.value);
+                                    return (
+                                        <button
+                                            key={platform.value}
+                                            type="button"
+                                            onClick={() => {
+                                                const newPlatforms = isSelected
+                                                    ? formData.preferredPlatforms.filter(p => p !== platform.value)
+                                                    : [...formData.preferredPlatforms, platform.value];
+                                                setFormData({ ...formData, preferredPlatforms: newPlatforms });
+                                            }}
+                                            className={`relative p-4 rounded-xl border-2 transition-all ${isSelected
                                                 ? 'border-blue-500 bg-blue-500/10 shadow-lg ring-2 ring-blue-500/30'
                                                 : 'border-white/10 hover:border-white/20 hover:bg-white/5'
-                                            }`}
-                                    >
-                                        {formData.preferredPlatform === platform.value && (
-                                            <div className="absolute top-2 right-2">
-                                                <Check className="w-5 h-5 text-blue-400" />
-                                            </div>
-                                        )}
-                                        <div className={`w-12 h-12 ${platform.color} rounded-lg mx-auto mb-2 shadow-md`}></div>
-                                        <p className="text-sm font-medium text-white">
-                                            {platform.label}
-                                        </p>
-                                    </button>
-                                ))}
+                                                }`}
+                                        >
+                                            {isSelected && (
+                                                <div className="absolute top-2 right-2">
+                                                    <Check className="w-5 h-5 text-blue-400" />
+                                                </div>
+                                            )}
+                                            <div className={`w-12 h-12 ${platform.color} rounded-lg mx-auto mb-2 shadow-md`}></div>
+                                            <p className="text-sm font-medium text-white">
+                                                {platform.label}
+                                            </p>
+                                        </button>
+                                    );
+                                })}
                             </div>
 
-                            {errors.preferredPlatform && (
-                                <p className="mt-4 text-sm text-red-400">{errors.preferredPlatform}</p>
+                            {errors.preferredPlatforms && (
+                                <p className="mt-4 text-sm text-red-400">{errors.preferredPlatforms}</p>
                             )}
                         </div>
 
