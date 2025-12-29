@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import {
     Shield, Eye, CheckCircle2, XCircle, LogOut, MessageSquare,
     Send, Bell, Flame, Video, Link as LinkIcon, Trash2,
-    Users, User, Search, Award, ExternalLink
+    Users, User, Search, ExternalLink
 } from 'lucide-react';
 import type { Submission, Announcement, Profile } from '../types/database';
 import Badge from '../components/ui/Badge';
@@ -177,10 +177,12 @@ const AdminDashboard: React.FC = () => {
 
             // Only update points if there's a change
             if (pointAdjustment !== 0) {
-                await supabase.rpc('increment_points', {
-                    user_id: targetUserId,
-                    points: pointAdjustment,
-                }).catch(async (rpcError: any) => {
+                try {
+                    await supabase.rpc('increment_points', {
+                        user_id: targetUserId,
+                        points: pointAdjustment,
+                    });
+                } catch (rpcError: any) {
                     console.warn('RPC increment_points failed, falling back to manual update', rpcError);
                     const { data: cp } = await supabase.from('profiles').select('total_points').eq('id', targetUserId).single();
                     if (cp) {
@@ -188,7 +190,7 @@ const AdminDashboard: React.FC = () => {
                             total_points: (cp.total_points || 0) + pointAdjustment
                         }).eq('id', targetUserId);
                     }
-                });
+                }
             }
 
             // Unlock next day only if newly validated (not just score updated)
@@ -231,10 +233,12 @@ const AdminDashboard: React.FC = () => {
             const targetUserId = selectedSubmission.user_id;
 
             if (pointAdjustment !== 0) {
-                await supabase.rpc('increment_points', {
-                    user_id: targetUserId,
-                    points: pointAdjustment,
-                }).catch(async (rpcError: any) => {
+                try {
+                    await supabase.rpc('increment_points', {
+                        user_id: targetUserId,
+                        points: pointAdjustment,
+                    });
+                } catch (rpcError: any) {
                     console.warn('RPC increment_points failed, falling back to manual update', rpcError);
                     const { data: cp } = await supabase.from('profiles').select('total_points').eq('id', targetUserId).single();
                     if (cp) {
@@ -242,7 +246,7 @@ const AdminDashboard: React.FC = () => {
                             total_points: Math.max(0, (cp.total_points || 0) + pointAdjustment)
                         }).eq('id', targetUserId);
                     }
-                });
+                }
             }
 
             setSelectedSubmission(null);
