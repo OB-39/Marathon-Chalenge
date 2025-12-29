@@ -66,7 +66,7 @@ const PerformanceChart: React.FC<PerformanceChartProps> = ({ validated, pending,
                         <Legend
                             verticalAlign="bottom"
                             height={36}
-                            formatter={(value, entry: any) => (
+                            formatter={(value, _entry: any) => (
                                 <span className="text-sm font-medium text-surface-600 ml-2">
                                     {value}
                                 </span>

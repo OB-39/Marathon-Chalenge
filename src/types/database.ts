@@ -6,6 +6,8 @@ export interface Profile {
     total_points: number;
     is_registered: boolean;
     avatar_url: string | null;
+    phone_number?: string | null;
+    university?: string | null;
     bio?: string | null;
     linkedin_url?: string | null;
     facebook_url?: string | null;

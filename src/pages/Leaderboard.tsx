@@ -9,7 +9,7 @@ import EditProfileModal from '../components/EditProfileModal';
 import { Trophy, Medal, Award, User, TrendingUp, LayoutDashboard } from 'lucide-react';
 
 const Leaderboard: React.FC = () => {
-    const { user, profile } = useAuth();
+    const { user } = useAuth();
     const navigate = useNavigate();
     const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
     const [loading, setLoading] = useState(true);
