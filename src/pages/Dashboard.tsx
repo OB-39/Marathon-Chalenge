@@ -86,7 +86,19 @@ const Dashboard: React.FC = () => {
         if (submission) {
             return submission.status;
         }
-        return day.is_active ? 'active' : 'locked';
+
+        // Day 1 is always active
+        if (day.day_number === 1) {
+            return 'active';
+        }
+
+        // Other days unlock when the previous day is validated
+        const previousDaySubmission = getSubmissionForDay(day.day_number - 1);
+        if (previousDaySubmission && previousDaySubmission.status === 'validated') {
+            return 'active';
+        }
+
+        return 'locked';
     };
 
     const validatedCount = submissions.filter((s) => s.status === 'validated').length;

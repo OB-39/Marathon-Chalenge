@@ -193,13 +193,11 @@ const AdminDashboard: React.FC = () => {
                 }
             }
 
-            // Unlock next day only if newly validated (not just score updated)
-            if (selectedSubmission.status !== 'validated') {
-                const nextDayNumber = selectedSubmission.day_number + 1;
-                if (nextDayNumber <= 15) {
-                    await supabase.from('challenge_days').update({ is_active: true }).eq('day_number', nextDayNumber);
-                }
-            }
+            // Note: Day unlocking is automatic based on validated submissions count
+            // The Dashboard.tsx already handles this logic:
+            // - Day 1 is always active
+            // - Day N+1 becomes active when user has N validated submissions
+            // No need to update challenge_days table (it's global, not per-user)
 
             setSelectedSubmission(null);
             fetchSubmissions();
