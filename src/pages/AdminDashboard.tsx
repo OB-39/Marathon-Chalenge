@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import {
     Shield, Eye, CheckCircle2, XCircle, LogOut, MessageSquare,
     Send, Bell, Flame, Video, Link as LinkIcon, Trash2,
-    Users, User, Search, ExternalLink
+    Users, User, Search, ExternalLink, Menu, X
 } from 'lucide-react';
 import type { Submission, Announcement, Profile } from '../types/database';
 import Badge from '../components/ui/Badge';
@@ -37,6 +37,7 @@ const AdminDashboard: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [loading, setLoading] = useState(true);
     const [isPublishing, setIsPublishing] = useState(false);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
 
     useEffect(() => {
@@ -265,246 +266,526 @@ const AdminDashboard: React.FC = () => {
 
     if (profile?.role !== 'ambassador') return null;
 
+    const tabs = [
+        { id: 'pending', label: 'À valider', shortLabel: 'Valider', count: submissions.length, icon: Eye, color: 'orange' },
+        { id: 'reviewed', label: 'Analysées', shortLabel: 'Analysées', count: reviewedSubmissions.length, icon: CheckCircle2, color: 'green' },
+        { id: 'communications', label: 'Communications', shortLabel: 'Comm', count: announcements.length, icon: Send, color: 'purple' },
+        { id: 'users', label: 'Participants', shortLabel: 'Users', count: allUsers.length, icon: Users, color: 'blue' }
+    ];
+
     return (
-        <div className="min-h-screen pb-12">
-            <header className="glass-strong border-b border-white/10 sticky top-0 z-10">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="min-h-screen pb-12 md:pb-0">
+            {/* Mobile Header */}
+            <header className="glass-strong border-b border-white/10 sticky top-0 z-50">
+                <div className="max-w-7xl mx-auto px-4 py-3 md:py-4">
                     <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-2 rounded-2xl shadow-lg glow-purple">
-                                <Shield className="w-6 h-6 text-white" />
+                        {/* Logo & Title */}
+                        <div className="flex items-center gap-2 md:gap-3">
+                            <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-1.5 md:p-2 rounded-xl md:rounded-2xl shadow-lg glow-purple">
+                                <Shield className="w-5 h-5 md:w-6 md:h-6 text-white" />
                             </div>
-                            <h1 className="text-xl font-bold text-white font-display tracking-tight">Admin Dashboard</h1>
+                            <h1 className="text-base md:text-xl font-bold text-white font-display tracking-tight">
+                                <span className="hidden sm:inline">Admin Dashboard</span>
+                                <span className="sm:hidden">Admin</span>
+                            </h1>
                         </div>
-                        <div className="flex items-center gap-4">
+
+                        {/* Desktop Actions */}
+                        <div className="hidden md:flex items-center gap-4">
                             <ExportButton type="submissions" />
-                            <div className="h-6 w-[1px] bg-white/10 mx-1"></div>
+                            <div className="h-6 w-[1px] bg-white/10"></div>
                             <Button variant="ghost" onClick={signOut} className="text-red-400 hover:text-red-300 hover:bg-red-500/10 font-semibold">
                                 <LogOut className="w-4 h-4 mr-2" /> Déconnexion
                             </Button>
                         </div>
+
+                        {/* Mobile Menu Button */}
+                        <button
+                            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                            className="md:hidden p-2 rounded-lg hover:bg-white/10 transition-colors"
+                        >
+                            {mobileMenuOpen ? <X className="w-5 h-5 text-white" /> : <Menu className="w-5 h-5 text-white" />}
+                        </button>
                     </div>
+
+                    {/* Mobile Menu */}
+                    {mobileMenuOpen && (
+                        <div className="md:hidden mt-4 pt-4 border-t border-white/10 space-y-2">
+                            <ExportButton type="submissions" />
+                            <Button
+                                variant="ghost"
+                                onClick={() => {
+                                    signOut();
+                                    setMobileMenuOpen(false);
+                                }}
+                                className="w-full text-red-400 hover:text-red-300 hover:bg-red-500/10 font-semibold justify-start"
+                            >
+                                <LogOut className="w-4 h-4 mr-2" /> Déconnexion
+                            </Button>
+                        </div>
+                    )}
                 </div>
             </header>
 
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div className="glass-strong rounded-2xl p-6 border border-orange-500/30 hover-glow transition-all">
-                        <p className="text-sm font-medium text-gray-400 uppercase tracking-wide">En attente</p>
-                        <p className="text-3xl font-bold text-orange-400 mt-2 font-display">{submissions.length}</p>
+            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8">
+                {/* Stats Cards */}
+                <div className="grid grid-cols-3 md:grid-cols-3 gap-3 md:gap-6 mb-6 md:mb-8">
+                    <div className="glass-strong rounded-xl md:rounded-2xl p-3 md:p-6 border border-orange-500/30 hover-glow transition-all">
+                        <p className="text-[10px] md:text-sm font-medium text-gray-400 uppercase tracking-wide">En attente</p>
+                        <p className="text-xl md:text-3xl font-bold text-orange-400 mt-1 md:mt-2 font-display">{submissions.length}</p>
                     </div>
-                    <div className="glass-strong rounded-2xl p-6 border border-green-500/30 hover-glow transition-all">
-                        <p className="text-sm font-medium text-gray-400 uppercase tracking-wide">Analysées</p>
-                        <p className="text-3xl font-bold text-green-400 mt-2 font-display">{reviewedSubmissions.length}</p>
+                    <div className="glass-strong rounded-xl md:rounded-2xl p-3 md:p-6 border border-green-500/30 hover-glow transition-all">
+                        <p className="text-[10px] md:text-sm font-medium text-gray-400 uppercase tracking-wide">Analysées</p>
+                        <p className="text-xl md:text-3xl font-bold text-green-400 mt-1 md:mt-2 font-display">{reviewedSubmissions.length}</p>
                     </div>
-                    <div className="glass-strong rounded-2xl p-6 border border-blue-500/30 hover-glow transition-all">
-                        <p className="text-sm font-medium text-gray-400 uppercase tracking-wide">Participants</p>
-                        <p className="text-3xl font-bold text-blue-400 mt-2 font-display">{allUsers.length}</p>
+                    <div className="glass-strong rounded-xl md:rounded-2xl p-3 md:p-6 border border-blue-500/30 hover-glow transition-all">
+                        <p className="text-[10px] md:text-sm font-medium text-gray-400 uppercase tracking-wide">Participants</p>
+                        <p className="text-xl md:text-3xl font-bold text-blue-400 mt-1 md:mt-2 font-display">{allUsers.length}</p>
                     </div>
                 </div>
 
-                <div className="glass-strong rounded-2xl overflow-hidden border border-white/10">
-                    <div className="border-b border-white/10">
-                        <div className="flex items-center">
-                            {[
-                                { id: 'pending', label: 'À valider', count: submissions.length, icon: Eye, color: 'orange' },
-                                { id: 'reviewed', label: 'Analysées', count: reviewedSubmissions.length, icon: CheckCircle2, color: 'green' },
-                                { id: 'communications', label: 'Communications', count: announcements.length, icon: Send, color: 'purple' },
-                                { id: 'users', label: 'Participants', count: allUsers.length, icon: Users, color: 'blue' }
-                            ].map(tab => (
+                {/* Tabs Container */}
+                <div className="glass-strong rounded-xl md:rounded-2xl overflow-hidden border border-white/10">
+                    {/* Tabs - Horizontal Scroll on Mobile */}
+                    <div className="border-b border-white/10 overflow-x-auto scrollbar-hide">
+                        <div className="flex min-w-max md:min-w-0">
+                            {tabs.map(tab => (
                                 <button
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id as any)}
-                                    className={`flex-1 px-6 py-4 text-sm font-medium text-center transition-colors relative ${activeTab === tab.id ? `text-${tab.color}-400 bg-${tab.color}-500/10 border-b-2 border-${tab.color}-500` : 'text-gray-400 hover:text-gray-300 hover:bg-white/5'}`}
+                                    className={`flex-1 min-w-[80px] md:min-w-0 px-3 md:px-6 py-3 md:py-4 text-xs md:text-sm font-medium text-center transition-colors relative ${activeTab === tab.id
+                                            ? `text-${tab.color}-400 bg-${tab.color}-500/10 border-b-2 border-${tab.color}-500`
+                                            : 'text-gray-400 hover:text-gray-300 hover:bg-white/5'
+                                        }`}
                                 >
-                                    <div className="flex items-center justify-center gap-2">
+                                    <div className="flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2">
                                         <tab.icon className="w-4 h-4" />
-                                        {tab.label} ({tab.count})
+                                        <span className="hidden md:inline">{tab.label} ({tab.count})</span>
+                                        <span className="md:hidden text-[10px]">{tab.shortLabel}</span>
+                                        <span className="md:hidden text-[10px] font-bold">({tab.count})</span>
                                     </div>
                                 </button>
                             ))}
                         </div>
                     </div>
 
-                    {activeTab === 'pending' && (
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead className="bg-slate-900/60 border-b border-white/5">
-                                    <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Étudiant</th>
-                                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Jour</th>
-                                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
-                                        <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-white/5 bg-transparent">
+                    {/* Tab Content */}
+                    <div className="p-0 md:p-0">
+                        {activeTab === 'pending' && (
+                            <div>
+                                {/* Desktop Table */}
+                                <div className="hidden md:block overflow-x-auto">
+                                    <table className="w-full">
+                                        <thead className="bg-slate-900/60 border-b border-white/5">
+                                            <tr>
+                                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Étudiant</th>
+                                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Jour</th>
+                                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
+                                                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-white/5 bg-transparent">
+                                            {loading ? (
+                                                <tr><td colSpan={4} className="px-6 py-12 text-center text-gray-500">Chargement...</td></tr>
+                                            ) : submissions.length === 0 ? (
+                                                <tr><td colSpan={4} className="px-6 py-12 text-center text-gray-500">Aucune soumission en attente. 🎉</td></tr>
+                                            ) : (
+                                                submissions.map(s => (
+                                                    <tr key={s.id} className="hover:bg-white/5 transition-colors">
+                                                        <td className="px-6 py-4 whitespace-nowrap">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-10 h-10 rounded-full bg-slate-800 border-2 border-white/10 overflow-hidden">
+                                                                    {s.profile?.avatar_url ? <img src={s.profile.avatar_url} className="w-full h-full object-cover" alt="" /> : <div className="w-full h-full flex items-center justify-center text-gray-400">{s.profile?.full_name?.charAt(0)}</div>}
+                                                                </div>
+                                                                <div>
+                                                                    <div className="text-sm font-medium text-white">{s.profile?.full_name}</div>
+                                                                    <div className="text-xs text-gray-500">{s.profile?.email}</div>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4 text-sm text-white">Jour {s.day_number}</td>
+                                                        <td className="px-6 py-4 text-xs text-gray-400">{new Date(s.created_at!).toLocaleString()}</td>
+                                                        <td className="px-6 py-4 text-right"><Button size="sm" onClick={() => setSelectedSubmission(s)}>Évaluer</Button></td>
+                                                    </tr>
+                                                ))
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                {/* Mobile Cards */}
+                                <div className="md:hidden divide-y divide-white/5">
                                     {loading ? (
-                                        <tr><td colSpan={4} className="px-6 py-12 text-center text-gray-500">Chargement...</td></tr>
+                                        <div className="px-4 py-12 text-center text-gray-500">Chargement...</div>
                                     ) : submissions.length === 0 ? (
-                                        <tr><td colSpan={4} className="px-6 py-12 text-center text-gray-500">Aucune soumission en attente. 🎉</td></tr>
+                                        <div className="px-4 py-12 text-center text-gray-500">Aucune soumission en attente. 🎉</div>
                                     ) : (
                                         submissions.map(s => (
-                                            <tr key={s.id} className="hover:bg-white/5 transition-colors">
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-10 h-10 rounded-full bg-slate-800 border-2 border-white/10 overflow-hidden">
-                                                            {s.profile?.avatar_url ? <img src={s.profile.avatar_url} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-gray-400">{s.profile?.full_name?.charAt(0)}</div>}
-                                                        </div>
-                                                        <div>
-                                                            <div className="text-sm font-medium text-white">{s.profile?.full_name}</div>
-                                                            <div className="text-xs text-gray-500">{s.profile?.email}</div>
+                                            <div key={s.id} className="p-4 hover:bg-white/5 transition-colors">
+                                                <div className="flex items-start gap-3 mb-3">
+                                                    <div className="w-12 h-12 rounded-full bg-slate-800 border-2 border-white/10 overflow-hidden flex-shrink-0">
+                                                        {s.profile?.avatar_url ? <img src={s.profile.avatar_url} className="w-full h-full object-cover" alt="" /> : <div className="w-full h-full flex items-center justify-center text-gray-400 text-lg">{s.profile?.full_name?.charAt(0)}</div>}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="text-sm font-medium text-white truncate">{s.profile?.full_name}</div>
+                                                        <div className="text-xs text-gray-500 truncate">{s.profile?.email}</div>
+                                                        <div className="flex items-center gap-2 mt-1">
+                                                            <span className="text-xs font-semibold text-orange-400">Jour {s.day_number}</span>
+                                                            <span className="text-xs text-gray-500">•</span>
+                                                            <span className="text-xs text-gray-500">{new Date(s.created_at!).toLocaleDateString()}</span>
                                                         </div>
                                                     </div>
-                                                </td>
-                                                <td className="px-6 py-4 text-sm text-white">Jour {s.day_number}</td>
-                                                <td className="px-6 py-4 text-xs text-gray-400">{new Date(s.created_at!).toLocaleString()}</td>
-                                                <td className="px-6 py-4 text-right"><Button size="sm" onClick={() => setSelectedSubmission(s)}>Évaluer</Button></td>
-                                            </tr>
+                                                </div>
+                                                <Button size="sm" onClick={() => setSelectedSubmission(s)} className="w-full">Évaluer</Button>
+                                            </div>
                                         ))
                                     )}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
-
-                    {activeTab === 'reviewed' && (
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead className="bg-slate-900/60 border-b border-white/5">
-                                    <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Étudiant</th>
-                                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Info</th>
-                                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Statut</th>
-                                        <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-white/5">
-                                    {reviewedSubmissions.map(s => (
-                                        <tr key={s.id} className="hover:bg-white/5 transition-colors">
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-full bg-slate-800 border-2 border-white/10 overflow-hidden">
-                                                        {s.profile?.avatar_url ? <img src={s.profile.avatar_url} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-gray-400">{s.profile?.full_name?.charAt(0)}</div>}
-                                                    </div>
-                                                    <div>
-                                                        <div className="text-sm font-medium text-white">{s.profile?.full_name}</div>
-                                                        <div className="text-xs text-gray-500">Jour {s.day_number}</div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="text-xs text-gray-400">{new Date(s.updated_at!).toLocaleDateString()}</div>
-                                                <div className="text-sm font-bold text-purple-400">{s.score_awarded}/10</div>
-                                            </td>
-                                            <td className="px-6 py-4"><Badge status={s.status} /></td>
-                                            <td className="px-6 py-4 text-right">
-                                                <Button size="sm" variant="ghost" onClick={() => { setSelectedSubmission(s); setScore(s.score_awarded || 5); }} className="text-gray-400 hover:text-white">
-                                                    <Eye className="w-4 h-4 mr-1" /> Revoir
-                                                </Button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
-
-                    {activeTab === 'communications' && (
-                        <div className="p-6 space-y-8">
-                            <div className="glass-panel rounded-2xl p-6 border border-white/10">
-                                <h3 className="text-lg font-semibold text-white mb-6 flex items-center gap-2"><Send className="w-5 h-5 text-purple-400" /> Publier sur le Leaderboard</h3>
-                                <form onSubmit={handleCreateAnnouncement} className="space-y-4">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div className="space-y-4">
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-400 mb-1">Type de contenu</label>
-                                                <div className="grid grid-cols-2 gap-2">
-                                                    {[{ id: 'announcement', label: 'Annonce', icon: Bell }, { id: 'motivation', label: 'Motivation', icon: Flame }, { id: 'video', label: 'Vidéo', icon: Video }, { id: 'link', label: 'Lien Web', icon: LinkIcon }].map(item => (
-                                                        <button key={item.id} type="button" onClick={() => setNewAnnouncement({ ...newAnnouncement, type: item.id as any })} className={`flex items-center justify-center gap-2 p-3 rounded-xl border transition-all ${newAnnouncement.type === item.id ? 'bg-purple-500/20 border-purple-500 text-purple-400' : 'border-white/10 text-gray-400 hover:bg-white/5'}`}>
-                                                            <item.icon className="w-4 h-4" /> <span className="text-sm font-medium">{item.label}</span>
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                            <input type="text" value={newAnnouncement.title} onChange={e => setNewAnnouncement({ ...newAnnouncement, title: e.target.value })} className="input-neo w-full" placeholder="Titre..." required />
-                                            {(newAnnouncement.type === 'video' || newAnnouncement.type === 'link') && <input type="url" value={newAnnouncement.url} onChange={e => setNewAnnouncement({ ...newAnnouncement, url: e.target.value })} className="input-neo w-full" placeholder="https://..." />}
-                                        </div>
-                                        <textarea value={newAnnouncement.content} onChange={e => setNewAnnouncement({ ...newAnnouncement, content: e.target.value })} className="input-neo w-full h-full min-h-[150px] resize-none" placeholder="Message..." required />
-                                    </div>
-                                    <div className="flex justify-end pt-2"><Button type="submit" isLoading={isPublishing} className="px-8 btn-primary-neo">Publier</Button></div>
-                                </form>
-                            </div>
-                            <div className="space-y-4">
-                                {announcements.map(ann => (
-                                    <div key={ann.id} className="glass-panel rounded-2xl p-4 border border-white/10 flex items-start gap-4">
-                                        <div className="p-3 rounded-xl bg-purple-500/10 text-purple-400"><Bell className="w-5 h-5" /></div>
-                                        <div className="flex-1">
-                                            <div className="flex justify-between"><h4 className="font-bold text-white">{ann.title}</h4><span className="text-xs text-gray-500">{new Date(ann.created_at!).toLocaleDateString()}</span></div>
-                                            <p className="text-sm text-gray-400">{ann.content}</p>
-                                        </div>
-                                        <button onClick={() => handleDeleteAnnouncement(ann.id)} className="text-gray-500 hover:text-red-400"><Trash2 className="w-5 h-5" /></button>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {activeTab === 'users' && (
-                        <div className="p-6">
-                            <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
-                                <div><h3 className="text-lg font-semibold text-white">Participants</h3><p className="text-xs text-gray-500">Suivi et relance des candidats.</p></div>
-                                <div className="flex gap-3">
-                                    <Button variant="secondary" size="sm" className="gap-2 border-orange-500/20 text-orange-400" onClick={() => {
-                                        const today = new Date().toISOString().split('T')[0];
-                                        const late = allUsers.filter(u => !reviewedSubmissions.some(s => s.user_id === u.id && s.created_at?.startsWith(today)) && !submissions.some(s => s.user_id === u.id && s.created_at?.startsWith(today)));
-                                        if (late.length === 0) return alert("Tout le monde est à jour !");
-                                        window.location.href = `mailto:?bcc=${late.map(u => u.email).join(',')}&subject=Rappel Marathon Challenge&body=N'oubliez pas votre participation du jour !`;
-                                    }}><Bell className="w-4 h-4" /> Rappel</Button>
-                                    <div className="relative"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" /><input type="text" placeholder="Rechercher..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="input-neo pl-10 h-10 text-sm" /></div>
                                 </div>
                             </div>
-                            <div className="overflow-x-auto">
-                                <table className="w-full">
-                                    <thead><tr className="text-left border-b border-white/5"><th className="px-4 py-3 text-xs font-semibold text-gray-400 uppercase">Candidat</th><th className="px-4 py-3 text-xs font-semibold text-gray-400 uppercase">Université</th><th className="px-4 py-3 text-xs font-semibold text-gray-400 uppercase text-center">Jours</th><th className="px-4 py-3 text-xs font-semibold text-gray-400 uppercase text-center">Score</th><th className="px-4 py-3 text-xs font-semibold text-gray-400 uppercase text-right">Actions</th></tr></thead>
-                                    <tbody className="divide-y divide-white/5">{allUsers.filter(u => u.full_name?.toLowerCase().includes(searchQuery.toLowerCase())).map(u => (
-                                        <tr key={u.id} className="hover:bg-white/5 transition-colors">
-                                            <td className="px-4 py-4"><div className="flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-slate-800 overflow-hidden">{u.avatar_url ? <img src={u.avatar_url} className="w-full h-full object-cover" /> : <User className="w-full h-full p-1" />}</div><div><div className="text-sm font-bold text-white">{u.full_name}</div><div className="text-xs text-gray-500">{u.email}</div></div></div></td>
-                                            <td className="px-4 py-4 text-sm text-gray-300">{u.university || 'N/A'}</td>
-                                            <td className="px-4 py-4 text-center text-sm text-white font-bold">{u.validated_count}/15</td>
-                                            <td className="px-4 py-4 text-center"><span className="px-2 py-1 rounded-full bg-blue-500/10 text-blue-400 text-xs font-bold">{u.total_points} pts</span></td>
-                                            <td className="px-4 py-4 text-right"><button onClick={() => alert('Bientôt disponible')} className="text-gray-500 hover:text-white"><MessageSquare className="w-5 h-5" /></button></td>
-                                        </tr>
-                                    ))}</tbody>
-                                </table>
+                        )}
+
+                        {activeTab === 'reviewed' && (
+                            <div>
+                                {/* Desktop Table */}
+                                <div className="hidden md:block overflow-x-auto">
+                                    <table className="w-full">
+                                        <thead className="bg-slate-900/60 border-b border-white/5">
+                                            <tr>
+                                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Étudiant</th>
+                                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Info</th>
+                                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Statut</th>
+                                                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-white/5">
+                                            {reviewedSubmissions.map(s => (
+                                                <tr key={s.id} className="hover:bg-white/5 transition-colors">
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-10 h-10 rounded-full bg-slate-800 border-2 border-white/10 overflow-hidden">
+                                                                {s.profile?.avatar_url ? <img src={s.profile.avatar_url} className="w-full h-full object-cover" alt="" /> : <div className="w-full h-full flex items-center justify-center text-gray-400">{s.profile?.full_name?.charAt(0)}</div>}
+                                                            </div>
+                                                            <div>
+                                                                <div className="text-sm font-medium text-white">{s.profile?.full_name}</div>
+                                                                <div className="text-xs text-gray-500">Jour {s.day_number}</div>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <div className="text-xs text-gray-400">{new Date(s.updated_at!).toLocaleDateString()}</div>
+                                                        <div className="text-sm font-bold text-purple-400">{s.score_awarded}/10</div>
+                                                    </td>
+                                                    <td className="px-6 py-4"><Badge status={s.status} /></td>
+                                                    <td className="px-6 py-4 text-right">
+                                                        <Button size="sm" variant="ghost" onClick={() => { setSelectedSubmission(s); setScore(s.score_awarded || 5); }} className="text-gray-400 hover:text-white">
+                                                            <Eye className="w-4 h-4 mr-1" /> Revoir
+                                                        </Button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                {/* Mobile Cards */}
+                                <div className="md:hidden divide-y divide-white/5">
+                                    {reviewedSubmissions.map(s => (
+                                        <div key={s.id} className="p-4 hover:bg-white/5 transition-colors">
+                                            <div className="flex items-start gap-3 mb-3">
+                                                <div className="w-12 h-12 rounded-full bg-slate-800 border-2 border-white/10 overflow-hidden flex-shrink-0">
+                                                    {s.profile?.avatar_url ? <img src={s.profile.avatar_url} className="w-full h-full object-cover" alt="" /> : <div className="w-full h-full flex items-center justify-center text-gray-400 text-lg">{s.profile?.full_name?.charAt(0)}</div>}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="text-sm font-medium text-white truncate">{s.profile?.full_name}</div>
+                                                    <div className="flex items-center gap-2 mt-1">
+                                                        <span className="text-xs font-semibold text-purple-400">Jour {s.day_number}</span>
+                                                        <span className="text-xs text-gray-500">•</span>
+                                                        <span className="text-xs text-gray-500">{new Date(s.updated_at!).toLocaleDateString()}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2 mt-2">
+                                                        <Badge status={s.status} />
+                                                        <span className="text-sm font-bold text-purple-400">{s.score_awarded}/10</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <Button size="sm" variant="ghost" onClick={() => { setSelectedSubmission(s); setScore(s.score_awarded || 5); }} className="w-full text-gray-400 hover:text-white">
+                                                <Eye className="w-4 h-4 mr-1" /> Revoir
+                                            </Button>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
-                    )}
+                        )}
+
+                        {activeTab === 'communications' && (
+                            <div className="p-4 md:p-6 space-y-6 md:space-y-8">
+                                <div className="glass-panel rounded-xl md:rounded-2xl p-4 md:p-6 border border-white/10">
+                                    <h3 className="text-base md:text-lg font-semibold text-white mb-4 md:mb-6 flex items-center gap-2">
+                                        <Send className="w-4 h-4 md:w-5 md:h-5 text-purple-400" /> Publier sur le Leaderboard
+                                    </h3>
+                                    <form onSubmit={handleCreateAnnouncement} className="space-y-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="space-y-4">
+                                                <div>
+                                                    <label className="block text-xs md:text-sm font-medium text-gray-400 mb-2">Type de contenu</label>
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        {[
+                                                            { id: 'announcement', label: 'Annonce', icon: Bell },
+                                                            { id: 'motivation', label: 'Motivation', icon: Flame },
+                                                            { id: 'video', label: 'Vidéo', icon: Video },
+                                                            { id: 'link', label: 'Lien', icon: LinkIcon }
+                                                        ].map(item => (
+                                                            <button
+                                                                key={item.id}
+                                                                type="button"
+                                                                onClick={() => setNewAnnouncement({ ...newAnnouncement, type: item.id as any })}
+                                                                className={`flex items-center justify-center gap-2 p-2 md:p-3 rounded-lg md:rounded-xl border transition-all text-xs md:text-sm ${newAnnouncement.type === item.id
+                                                                        ? 'bg-purple-500/20 border-purple-500 text-purple-400'
+                                                                        : 'border-white/10 text-gray-400 hover:bg-white/5'
+                                                                    }`}
+                                                            >
+                                                                <item.icon className="w-3 h-3 md:w-4 md:h-4" />
+                                                                <span className="font-medium">{item.label}</span>
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                                <input
+                                                    type="text"
+                                                    value={newAnnouncement.title}
+                                                    onChange={e => setNewAnnouncement({ ...newAnnouncement, title: e.target.value })}
+                                                    className="input-neo w-full text-sm md:text-base"
+                                                    placeholder="Titre..."
+                                                    required
+                                                />
+                                                {(newAnnouncement.type === 'video' || newAnnouncement.type === 'link') && (
+                                                    <input
+                                                        type="url"
+                                                        value={newAnnouncement.url}
+                                                        onChange={e => setNewAnnouncement({ ...newAnnouncement, url: e.target.value })}
+                                                        className="input-neo w-full text-sm md:text-base"
+                                                        placeholder="https://..."
+                                                    />
+                                                )}
+                                            </div>
+                                            <textarea
+                                                value={newAnnouncement.content}
+                                                onChange={e => setNewAnnouncement({ ...newAnnouncement, content: e.target.value })}
+                                                className="input-neo w-full h-full min-h-[120px] md:min-h-[150px] resize-none text-sm md:text-base"
+                                                placeholder="Message..."
+                                                required
+                                            />
+                                        </div>
+                                        <div className="flex justify-end pt-2">
+                                            <Button type="submit" isLoading={isPublishing} className="w-full md:w-auto px-6 md:px-8 btn-primary-neo">
+                                                Publier
+                                            </Button>
+                                        </div>
+                                    </form>
+                                </div>
+                                <div className="space-y-3 md:space-y-4">
+                                    {announcements.map(ann => (
+                                        <div key={ann.id} className="glass-panel rounded-xl md:rounded-2xl p-3 md:p-4 border border-white/10 flex items-start gap-3 md:gap-4">
+                                            <div className="p-2 md:p-3 rounded-lg md:rounded-xl bg-purple-500/10 text-purple-400 flex-shrink-0">
+                                                <Bell className="w-4 h-4 md:w-5 md:h-5" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex justify-between items-start gap-2">
+                                                    <h4 className="font-bold text-white text-sm md:text-base truncate">{ann.title}</h4>
+                                                    <span className="text-[10px] md:text-xs text-gray-500 flex-shrink-0">{new Date(ann.created_at!).toLocaleDateString()}</span>
+                                                </div>
+                                                <p className="text-xs md:text-sm text-gray-400 mt-1 line-clamp-2">{ann.content}</p>
+                                            </div>
+                                            <button onClick={() => handleDeleteAnnouncement(ann.id)} className="text-gray-500 hover:text-red-400 flex-shrink-0">
+                                                <Trash2 className="w-4 h-4 md:w-5 md:h-5" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'users' && (
+                            <div className="p-4 md:p-6">
+                                <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
+                                    <div>
+                                        <h3 className="text-base md:text-lg font-semibold text-white">Participants</h3>
+                                        <p className="text-xs text-gray-500">Suivi et relance des candidats.</p>
+                                    </div>
+                                    <div className="flex flex-col sm:flex-row gap-3">
+                                        <Button
+                                            variant="secondary"
+                                            size="sm"
+                                            className="gap-2 border-orange-500/20 text-orange-400 w-full sm:w-auto"
+                                            onClick={() => {
+                                                const today = new Date().toISOString().split('T')[0];
+                                                const late = allUsers.filter(u => !reviewedSubmissions.some(s => s.user_id === u.id && s.created_at?.startsWith(today)) && !submissions.some(s => s.user_id === u.id && s.created_at?.startsWith(today)));
+                                                if (late.length === 0) return alert("Tout le monde est à jour !");
+                                                window.location.href = `mailto:?bcc=${late.map(u => u.email).join(',')}&subject=Rappel Marathon Challenge&body=N'oubliez pas votre participation du jour !`;
+                                            }}
+                                        >
+                                            <Bell className="w-4 h-4" /> Rappel
+                                        </Button>
+                                        <div className="relative w-full sm:w-auto">
+                                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                                            <input
+                                                type="text"
+                                                placeholder="Rechercher..."
+                                                value={searchQuery}
+                                                onChange={e => setSearchQuery(e.target.value)}
+                                                className="input-neo pl-10 h-10 text-sm w-full"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Desktop Table */}
+                                <div className="hidden md:block overflow-x-auto">
+                                    <table className="w-full">
+                                        <thead>
+                                            <tr className="text-left border-b border-white/5">
+                                                <th className="px-4 py-3 text-xs font-semibold text-gray-400 uppercase">Candidat</th>
+                                                <th className="px-4 py-3 text-xs font-semibold text-gray-400 uppercase">Université</th>
+                                                <th className="px-4 py-3 text-xs font-semibold text-gray-400 uppercase text-center">Jours</th>
+                                                <th className="px-4 py-3 text-xs font-semibold text-gray-400 uppercase text-center">Score</th>
+                                                <th className="px-4 py-3 text-xs font-semibold text-gray-400 uppercase text-right">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-white/5">
+                                            {allUsers.filter(u => u.full_name?.toLowerCase().includes(searchQuery.toLowerCase())).map(u => (
+                                                <tr key={u.id} className="hover:bg-white/5 transition-colors">
+                                                    <td className="px-4 py-4">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-8 h-8 rounded-full bg-slate-800 overflow-hidden">
+                                                                {u.avatar_url ? <img src={u.avatar_url} className="w-full h-full object-cover" alt="" /> : <User className="w-full h-full p-1" />}
+                                                            </div>
+                                                            <div>
+                                                                <div className="text-sm font-bold text-white">{u.full_name}</div>
+                                                                <div className="text-xs text-gray-500">{u.email}</div>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-4 py-4 text-sm text-gray-300">{u.university || 'N/A'}</td>
+                                                    <td className="px-4 py-4 text-center text-sm text-white font-bold">{u.validated_count}/15</td>
+                                                    <td className="px-4 py-4 text-center">
+                                                        <span className="px-2 py-1 rounded-full bg-blue-500/10 text-blue-400 text-xs font-bold">{u.total_points} pts</span>
+                                                    </td>
+                                                    <td className="px-4 py-4 text-right">
+                                                        <button onClick={() => alert('Bientôt disponible')} className="text-gray-500 hover:text-white">
+                                                            <MessageSquare className="w-5 h-5" />
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                {/* Mobile Cards */}
+                                <div className="md:hidden space-y-3">
+                                    {allUsers.filter(u => u.full_name?.toLowerCase().includes(searchQuery.toLowerCase())).map(u => (
+                                        <div key={u.id} className="glass-panel rounded-xl p-4 border border-white/10">
+                                            <div className="flex items-start gap-3 mb-3">
+                                                <div className="w-12 h-12 rounded-full bg-slate-800 overflow-hidden flex-shrink-0">
+                                                    {u.avatar_url ? <img src={u.avatar_url} className="w-full h-full object-cover" alt="" /> : <User className="w-full h-full p-2 text-gray-400" />}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="text-sm font-bold text-white truncate">{u.full_name}</div>
+                                                    <div className="text-xs text-gray-500 truncate">{u.email}</div>
+                                                    <div className="text-xs text-gray-400 mt-1">{u.university || 'N/A'}</div>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center justify-between pt-3 border-t border-white/10">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="text-center">
+                                                        <div className="text-xs text-gray-500">Jours</div>
+                                                        <div className="text-sm font-bold text-white">{u.validated_count}/15</div>
+                                                    </div>
+                                                    <div className="text-center">
+                                                        <div className="text-xs text-gray-500">Score</div>
+                                                        <div className="text-sm font-bold text-blue-400">{u.total_points} pts</div>
+                                                    </div>
+                                                </div>
+                                                <button onClick={() => alert('Bientôt disponible')} className="p-2 rounded-lg hover:bg-white/10 text-gray-500 hover:text-white transition-colors">
+                                                    <MessageSquare className="w-5 h-5" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </main>
 
+            {/* Evaluation Modal */}
             {selectedSubmission && (
                 <Modal isOpen={!!selectedSubmission} onClose={() => setSelectedSubmission(null)} title={`Évaluer Jour ${selectedSubmission.day_number}`} size="xl">
-                    <div className="space-y-6">
-                        <div className="glass-panel rounded-2xl p-5 border border-white/10 relative overflow-hidden">
+                    <div className="space-y-4 md:space-y-6">
+                        <div className="glass-panel rounded-xl md:rounded-2xl p-4 md:p-5 border border-white/10 relative overflow-hidden">
                             <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 blur-3xl -z-10" />
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative">
-                                <div><p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Candidat</p><p className="font-bold text-white text-lg">{selectedSubmission.profile?.full_name}</p></div>
-                                <div><p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Plateforme</p><Badge status="pending">{selectedSubmission.platform}</Badge></div>
-                                <div className="col-span-full"><p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Lien publication</p><a href={selectedSubmission.post_link} target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:text-purple-300 flex items-center gap-2 text-sm font-medium"><span className="truncate">{selectedSubmission.post_link}</span> <ExternalLink className="w-4 h-4" /></a></div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 relative">
+                                <div>
+                                    <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Candidat</p>
+                                    <p className="font-bold text-white text-base md:text-lg">{selectedSubmission.profile?.full_name}</p>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Plateforme</p>
+                                    <Badge status="pending">{selectedSubmission.platform}</Badge>
+                                </div>
+                                <div className="col-span-full">
+                                    <p className="text-[10px] uppercase font-bold text-gray-500 mb-1">Lien publication</p>
+                                    <a
+                                        href={selectedSubmission.post_link}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-purple-400 hover:text-purple-300 flex items-center gap-2 text-xs md:text-sm font-medium break-all"
+                                    >
+                                        <span className="truncate">{selectedSubmission.post_link}</span>
+                                        <ExternalLink className="w-3 h-3 md:w-4 md:h-4 flex-shrink-0" />
+                                    </a>
+                                </div>
                             </div>
                         </div>
-                        {selectedSubmission.proof_image_url && <img src={selectedSubmission.proof_image_url} alt="Proof" className="w-full rounded-xl border border-white/10 shadow-lg" />}
-                        <div className="glass-panel rounded-2xl p-5 border border-white/10">
+                        {selectedSubmission.proof_image_url && (
+                            <img src={selectedSubmission.proof_image_url} alt="Proof" className="w-full rounded-xl border border-white/10 shadow-lg" />
+                        )}
+                        <div className="glass-panel rounded-xl md:rounded-2xl p-4 md:p-5 border border-white/10">
                             <label className="block text-[10px] uppercase font-bold text-gray-500 mb-3">Notation (0-10)</label>
-                            <div className="flex items-center gap-4"><input type="range" min="0" max="10" value={score} onChange={e => setScore(Number(e.target.value))} className="flex-1 accent-purple-500" /><div className="w-12 h-12 rounded-xl bg-purple-500/20 border border-purple-500 flex items-center justify-center font-bold text-purple-400 text-xl">{score}</div></div>
+                            <div className="flex items-center gap-4">
+                                <input
+                                    type="range"
+                                    min="0"
+                                    max="10"
+                                    value={score}
+                                    onChange={e => setScore(Number(e.target.value))}
+                                    className="flex-1 accent-purple-500"
+                                />
+                                <div className="w-12 h-12 rounded-xl bg-purple-500/20 border border-purple-500 flex items-center justify-center font-bold text-purple-400 text-xl">
+                                    {score}
+                                </div>
+                            </div>
                         </div>
-                        <div className="glass-panel rounded-2xl p-5 border border-white/10">
-                            <label className="block text-[10px] uppercase font-bold text-gray-500 mb-3 flex items-center gap-2"><MessageSquare className="w-3.5 h-3.5" /> Commentaire / Motif</label>
-                            <textarea value={rejectionComment} onChange={e => setRejectionComment(e.target.value)} rows={3} className="input-neo w-full resize-none bg-black/20 border-white/5" placeholder="Message..." />
+                        <div className="glass-panel rounded-xl md:rounded-2xl p-4 md:p-5 border border-white/10">
+                            <label className="block text-[10px] uppercase font-bold text-gray-500 mb-3 flex items-center gap-2">
+                                <MessageSquare className="w-3.5 h-3.5" /> Commentaire / Motif
+                            </label>
+                            <textarea
+                                value={rejectionComment}
+                                onChange={e => setRejectionComment(e.target.value)}
+                                rows={3}
+                                className="input-neo w-full resize-none bg-black/20 border-white/5 text-sm md:text-base"
+                                placeholder="Message..."
+                            />
                         </div>
-                        <div className="flex gap-3 pt-4 border-t border-white/10">
-                            <Button variant="danger" onClick={handleReject} isLoading={isLoading} className="flex-1"><XCircle className="w-4 h-4 mr-2" /> Refuser</Button>
-                            <Button variant="success" onClick={handleValidate} isLoading={isLoading} className="flex-1"><CheckCircle2 className="w-4 h-4 mr-2" /> Valider</Button>
+                        <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-white/10">
+                            <Button variant="danger" onClick={handleReject} isLoading={isLoading} className="flex-1">
+                                <XCircle className="w-4 h-4 mr-2" /> Refuser
+                            </Button>
+                            <Button variant="success" onClick={handleValidate} isLoading={isLoading} className="flex-1">
+                                <CheckCircle2 className="w-4 h-4 mr-2" /> Valider
+                            </Button>
                         </div>
                     </div>
                 </Modal>
