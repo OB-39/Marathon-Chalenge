@@ -38,8 +38,12 @@ const AdminDashboard: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [isPublishing, setIsPublishing] = useState(false);
 
+
     useEffect(() => {
-        if (profile?.role !== 'ambassador') {
+        // Don't redirect if profile is still loading
+        if (!profile) return;
+
+        if (profile.role !== 'ambassador') {
             window.location.href = '/dashboard';
             return;
         }
