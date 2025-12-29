@@ -49,9 +49,9 @@ const OnboardingRoute: React.FC<{ children: React.ReactNode }> = ({ children }) 
     return <Navigate to="/login" replace />;
   }
 
-  // If already registered, redirect to dashboard
+  // If already registered, redirect to appropriate dashboard
   if (profile && profile.is_registered) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={profile.role === 'ambassador' ? '/admin' : '/dashboard'} replace />;
   }
 
   return <>{children}</>;
@@ -73,7 +73,7 @@ const LoginRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     if (!profile.is_registered) {
       return <Navigate to="/onboarding" replace />;
     }
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={profile.role === 'ambassador' ? '/admin' : '/dashboard'} replace />;
   }
 
   return <>{children}</>;
