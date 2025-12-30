@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { supabase } from '../lib/supabase';
 import Button from '../components/ui/Button';
-import { Shield, Mail, Lock, AlertCircle } from 'lucide-react';
+import { Mail, Lock, AlertCircle } from 'lucide-react';
 
 const AdminLogin: React.FC = () => {
     const navigate = useNavigate();
@@ -60,8 +60,8 @@ const AdminLogin: React.FC = () => {
             >
                 {/* Header */}
                 <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-2xl mb-4">
-                        <Shield className="w-8 h-8 text-white" />
+                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl overflow-hidden shadow-lg glow-blue border border-white/10 mb-4 bg-slate-800">
+                        <img src="/logo.png" className="w-full h-full object-cover" alt="Logo" />
                     </div>
                     <h1 className="text-3xl font-bold text-white mb-2">
                         Espace Ambassadeur
@@ -136,7 +136,7 @@ const AdminLogin: React.FC = () => {
                         <div className="text-center">
                             <button
                                 type="button"
-                                onClick={() => navigate('/leaderboard')}
+                                onClick={() => navigate('/')}
                                 className="text-sm text-slate-600 dark:text-slate-400 hover:text-primary transition-colors"
                             >
                                 ← Retour à l'accueil

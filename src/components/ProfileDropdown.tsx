@@ -27,7 +27,7 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ onEditProfile }) => {
 
     const handleSignOut = async () => {
         await signOut();
-        navigate('/leaderboard');
+        navigate('/');
     };
 
     return (

@@ -60,8 +60,8 @@ const Login: React.FC = () => {
                     className="hidden md:block space-y-6"
                 >
                     <div className="flex items-center gap-3">
-                        <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-3 rounded-2xl shadow-lg glow-blue">
-                            <Trophy className="w-10 h-10 text-white" />
+                        <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-lg glow-blue border border-white/10">
+                            <img src="/logo.png" className="w-full h-full object-cover" alt="Logo" />
                         </div>
                         <h1 className="text-4xl lg:text-5xl font-bold text-white font-display">
                             Marathon Challenge

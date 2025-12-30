@@ -50,20 +50,86 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     useEffect(() => {
-        // Get initial session
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setSession(session);
-            setUser(session?.user ?? null);
-            if (session?.user) {
-                fetchProfile(session.user.id);
+        console.log('🔄 [AUTH CONTEXT] useEffect appelé - Initialisation...');
+
+        // Check for quick login first
+        const checkQuickLogin = async () => {
+            console.log('🔍 [AUTH CONTEXT] Vérification quick login...');
+            const quickLoginUserId = sessionStorage.getItem('quick_login_user_id');
+            const quickLoginTimestamp = sessionStorage.getItem('quick_login_timestamp');
+
+            console.log('🔍 [AUTH CONTEXT] quick_login_user_id:', quickLoginUserId);
+            console.log('🔍 [AUTH CONTEXT] quick_login_timestamp:', quickLoginTimestamp);
+
+            if (quickLoginUserId && quickLoginTimestamp) {
+                // Vérifier que la session n'est pas expirée (24h)
+                const timestamp = parseInt(quickLoginTimestamp);
+                const now = Date.now();
+                const twentyFourHours = 24 * 60 * 60 * 1000;
+
+                if (now - timestamp < twentyFourHours) {
+                    console.log('🔑 [AUTH CONTEXT] Quick login session found');
+                    // Charger le profil depuis la base de données
+                    try {
+                        const { data, error } = await supabase
+                            .from('profiles')
+                            .select('*')
+                            .eq('id', quickLoginUserId)
+                            .single();
+
+                        if (!error && data) {
+                            console.log('✅ [AUTH CONTEXT] Quick login profile loaded:', data);
+                            setProfile(data);
+                            // Créer un user object minimal pour compatibilité
+                            setUser({ id: data.id, email: data.email } as User);
+                            setLoading(false);
+                            return true;
+                        }
+                    } catch (err) {
+                        console.error('❌ [AUTH CONTEXT] Error loading quick login profile:', err);
+                        // Nettoyer la session invalide
+                        sessionStorage.removeItem('quick_login_user_id');
+                        sessionStorage.removeItem('quick_login_timestamp');
+                    }
+                } else {
+                    // Session expirée
+                    console.log('⏰ [AUTH CONTEXT] Quick login session expired');
+                    sessionStorage.removeItem('quick_login_user_id');
+                    sessionStorage.removeItem('quick_login_timestamp');
+                }
+            } else {
+                console.log('❌ [AUTH CONTEXT] Pas de quick login session trouvée');
             }
-            setLoading(false);
+            return false;
+        };
+
+        // Vérifier d'abord la connexion rapide
+        checkQuickLogin().then((hasQuickLogin) => {
+            if (hasQuickLogin) {
+                return; // On a déjà chargé le profil via quick login
+            }
+
+            // Sinon, vérifier la session Supabase normale
+            supabase.auth.getSession().then(({ data: { session } }) => {
+                setSession(session);
+                setUser(session?.user ?? null);
+                if (session?.user) {
+                    fetchProfile(session.user.id);
+                }
+                setLoading(false);
+            });
         });
 
         // Listen for auth changes
         const {
             data: { subscription },
         } = supabase.auth.onAuthStateChange((_event, session) => {
+            // Si on a une session Supabase, elle a priorité sur quick login
+            if (session) {
+                sessionStorage.removeItem('quick_login_user_id');
+                sessionStorage.removeItem('quick_login_timestamp');
+            }
+
             setSession(session);
             setUser(session?.user ?? null);
             if (session?.user) {
@@ -96,6 +162,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     const signOut = async () => {
+        // Nettoyer la session rapide
+        sessionStorage.removeItem('quick_login_user_id');
+        sessionStorage.removeItem('quick_login_timestamp');
+
         const { error } = await supabase.auth.signOut();
         if (error) {
             console.error('Error signing out:', error);

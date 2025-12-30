@@ -84,7 +84,7 @@ const PublicProfile: React.FC = () => {
             <div className="min-h-screen flex items-center justify-center">
                 <div className="glass-strong rounded-2xl text-center p-12 border border-white/10">
                     <p className="text-lg text-gray-300">Profil non trouvé</p>
-                    <Button onClick={() => navigate('/leaderboard')} className="mt-4 btn-primary-neo">
+                    <Button onClick={() => navigate('/')} className="mt-4 btn-primary-neo">
                         Retour au classement
                     </Button>
                 </div>
@@ -101,7 +101,7 @@ const PublicProfile: React.FC = () => {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                     <div className="flex items-center justify-between">
                         <button
-                            onClick={() => navigate('/leaderboard')}
+                            onClick={() => navigate('/')}
                             className="flex items-center gap-2 text-white hover:text-blue-400 transition-colors group"
                         >
                             <ArrowLeft className="w-5 h-5 transition-transform group-hover:-translate-x-1" />

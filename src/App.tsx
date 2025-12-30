@@ -2,18 +2,26 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Login from './pages/Login';
+import QuickLogin from './pages/QuickLogin';
 import Onboarding from './pages/Onboarding';
 import Dashboard from './pages/Dashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminLogin from './pages/AdminLogin';
-import Leaderboard from './pages/Leaderboard';
 import PublicProfile from './pages/PublicProfile';
+import Home from './pages/Home';
+import Leaderboard from './pages/Leaderboard';
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, profile, loading } = useAuth();
 
+  console.log('🛡️ [PROTECTED ROUTE] Vérification...');
+  console.log('🛡️ [PROTECTED ROUTE] loading:', loading);
+  console.log('🛡️ [PROTECTED ROUTE] user:', user);
+  console.log('🛡️ [PROTECTED ROUTE] profile:', profile);
+
   if (loading) {
+    console.log('⏳ [PROTECTED ROUTE] Chargement en cours...');
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
@@ -22,14 +30,17 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   }
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    console.log('❌ [PROTECTED ROUTE] Pas d\'utilisateur, redirection vers l\'accueil');
+    return <Navigate to="/" replace />;
   }
 
   // If user is not registered, redirect to onboarding
   if (profile && !profile.is_registered) {
+    console.log('⚠️ [PROTECTED ROUTE] Utilisateur non enregistré, redirection vers /onboarding');
     return <Navigate to="/onboarding" replace />;
   }
 
+  console.log('✅ [PROTECTED ROUTE] Accès autorisé au dashboard');
   return <>{children}</>;
 };
 
@@ -46,7 +57,7 @@ const OnboardingRoute: React.FC<{ children: React.ReactNode }> = ({ children }) 
   }
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/" replace />;
   }
 
   // If already registered, redirect to appropriate dashboard
@@ -120,7 +131,8 @@ function AppRoutes() {
           </LoginRoute>
         }
       />
-      <Route path="/leaderboard" element={<Leaderboard />} />
+      <Route path="/quick-login" element={<QuickLogin />} />
+
       <Route path="/u/:userId" element={<PublicProfile />} />
       <Route path="/admin/login" element={<AdminLogin />} />
 
@@ -152,9 +164,10 @@ function AppRoutes() {
         }
       />
 
-      {/* Default redirect */}
-      <Route path="/" element={<Navigate to="/leaderboard" replace />} />
-      <Route path="*" element={<Navigate to="/leaderboard" replace />} />
+      {/* Home and Leaderboard Routes */}
+      <Route path="/" element={<Home />} />
+      <Route path="/leaderboard" element={<Leaderboard />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

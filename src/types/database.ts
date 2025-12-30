@@ -6,6 +6,7 @@ export interface Profile {
     total_points: number;
     is_registered: boolean;
     avatar_url: string | null;
+    unique_login_id?: string | null;
     phone_number?: string | null;
     university?: string | null;
     preferred_platform?: string | null;
@@ -24,10 +25,13 @@ export interface Submission {
     platform: 'linkedin' | 'facebook' | 'instagram';
     content_text: string | null;
     post_link: string;
+    submission_url?: string; // Alias pour post_link
     proof_image_url: string | null;
     status: 'pending' | 'validated' | 'rejected';
     score_awarded: number | null;
     rejection_comment?: string;
+    feedback?: string; // Alias pour rejection_comment
+    submitted_at?: string; // Alias pour created_at
     created_at?: string;
     updated_at?: string;
     // Relations
@@ -58,4 +62,15 @@ export interface ChallengeDay {
 export interface LeaderboardEntry extends Profile {
     rank: number;
     validated_days: number;
+}
+
+export interface Message {
+    id: string;
+    sender_id: string;
+    receiver_id: string;
+    content: string;
+    is_read: boolean;
+    created_at: string;
+    sender?: Profile;
+    receiver?: Profile;
 }

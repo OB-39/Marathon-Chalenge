@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import Button from '../components/ui/Button';
+import UniqueIdModal from '../components/UniqueIdModal';
 import { Upload, User, Phone, Building2, Globe, Info, Check } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -13,6 +14,8 @@ const Onboarding: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [photoFile, setPhotoFile] = useState<File | null>(null);
     const [photoPreview, setPhotoPreview] = useState<string>('');
+    const [showUniqueIdModal, setShowUniqueIdModal] = useState(false);
+    const [uniqueLoginId, setUniqueLoginId] = useState('');
 
     const [formData, setFormData] = useState({
         firstName: '',
@@ -107,6 +110,24 @@ const Onboarding: React.FC = () => {
 
             if (updateError) throw updateError;
 
+            console.log('🔍 [DEBUG] Récupération du profil mis à jour...');
+
+            // Récupérer le profil mis à jour avec l'identifiant unique
+            const { data: updatedProfile, error: fetchError } = await supabase
+                .from('profiles')
+                .select('unique_login_id, full_name')
+                .eq('id', user?.id)
+                .single();
+
+            console.log('🔍 [DEBUG] Profil récupéré:', updatedProfile);
+            console.log('🔍 [DEBUG] unique_login_id:', updatedProfile?.unique_login_id);
+            console.log('🔍 [DEBUG] Erreur de récupération:', fetchError);
+
+            if (fetchError) {
+                console.error('❌ [ERROR] Erreur lors de la récupération du profil:', fetchError);
+                throw fetchError;
+            }
+
             // Animation confetti
             confetti({
                 particleCount: 100,
@@ -114,13 +135,39 @@ const Onboarding: React.FC = () => {
                 origin: { y: 0.6 },
             });
 
-            // Rafraîchir le profil
-            await refreshProfile();
+            // NE PAS rafraîchir le profil maintenant car ça cause un re-render
+            // qui réinitialise les states locaux (showUniqueIdModal, uniqueLoginId)
+            // await refreshProfile();
 
-            // Redirection vers le dashboard
-            setTimeout(() => {
-                navigate('/dashboard');
-            }, 1000);
+            // Afficher le modal avec l'identifiant unique
+            if (updatedProfile?.unique_login_id) {
+                console.log('✅ [SUCCESS] ID unique trouvé, affichage du modal:', updatedProfile.unique_login_id);
+                setUniqueLoginId(updatedProfile.unique_login_id);
+                setShowUniqueIdModal(true);
+
+                // Vérifier que les états sont bien mis à jour
+                console.log('🎯 [STATE] setUniqueLoginId appelé avec:', updatedProfile.unique_login_id);
+                console.log('🎯 [STATE] setShowUniqueIdModal appelé avec: true');
+
+                // Log après un court délai pour voir l'état final
+                setTimeout(() => {
+                    console.log('🔍 [STATE CHECK] Vérification après 100ms');
+                    console.log('🔍 uniqueLoginId devrait être:', updatedProfile.unique_login_id);
+                    console.log('🔍 showUniqueIdModal devrait être: true');
+                }, 100);
+            } else {
+                console.warn('⚠️ [WARNING] Pas d\'identifiant unique trouvé !');
+                console.warn('⚠️ [WARNING] Profil complet:', updatedProfile);
+                console.warn('⚠️ [WARNING] Cela signifie probablement que le script SQL n\'a pas été exécuté sur Supabase');
+                console.warn('⚠️ [WARNING] Consultez .agent/DEBUG_MODAL_ISSUE.md pour résoudre ce problème');
+
+                // Si pas d'identifiant, rafraîchir le profil et rediriger
+                await refreshProfile();
+                alert('⚠️ Attention: Votre identifiant unique n\'a pas pu être généré. Consultez la console (F12) pour plus d\'informations.');
+                setTimeout(() => {
+                    navigate('/dashboard');
+                }, 2000);
+            }
         } catch (error: any) {
             console.error('Erreur lors de l\'inscription:', error);
             const errorMessage = error.message || 'Une erreur inconnue est survenue';
@@ -387,6 +434,20 @@ const Onboarding: React.FC = () => {
                     </form>
                 </div>
             </motion.div>
+
+            {/* Modal d'affichage de l'identifiant unique */}
+            <UniqueIdModal
+                isOpen={showUniqueIdModal}
+                onClose={async () => {
+                    console.log('🚪 [MODAL] Fermeture du modal');
+                    setShowUniqueIdModal(false);
+                    // Rafraîchir le profil maintenant que le modal est fermé
+                    await refreshProfile();
+                    navigate('/dashboard');
+                }}
+                uniqueId={uniqueLoginId}
+                userName={`${formData.firstName} ${formData.lastName}`}
+            />
         </div>
     );
 };
