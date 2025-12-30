@@ -46,7 +46,8 @@ const Leaderboard: React.FC = () => {
             const leaderboardData: LeaderboardEntry[] = (data || []).map((profile, index) => ({
                 ...profile,
                 rank: index + 1,
-            }));
+                validated_days: 0, // Default value to satisfy TypeScript
+            })) as LeaderboardEntry[];
 
             setLeaderboard(leaderboardData);
         } catch (error) {
