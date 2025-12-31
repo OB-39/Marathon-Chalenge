@@ -3,10 +3,9 @@ import { Clock, AlertTriangle } from 'lucide-react';
 
 interface DeadlineCountdownProps {
     deadline: string; // ISO timestamp
-    dayNumber: number;
 }
 
-const DeadlineCountdown: React.FC<DeadlineCountdownProps> = ({ deadline, dayNumber }) => {
+const DeadlineCountdown: React.FC<DeadlineCountdownProps> = ({ deadline }) => {
     const [timeLeft, setTimeLeft] = useState<{
         hours: number;
         minutes: number;
@@ -55,8 +54,8 @@ const DeadlineCountdown: React.FC<DeadlineCountdownProps> = ({ deadline, dayNumb
 
     return (
         <div className={`border rounded-lg p-3 transition-all ${timeLeft.isUrgent
-                ? 'bg-orange-500/20 border-orange-500/30 animate-pulse'
-                : 'bg-blue-500/20 border-blue-500/30'
+            ? 'bg-orange-500/20 border-orange-500/30 animate-pulse'
+            : 'bg-blue-500/20 border-blue-500/30'
             }`}>
             <div className="flex items-center gap-2 mb-2">
                 <Clock className={`w-4 h-4 ${timeLeft.isUrgent ? 'text-orange-400' : 'text-blue-400'}`} />

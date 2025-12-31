@@ -176,7 +176,7 @@ const Home: React.FC = () => {
                         >
                             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-blue-400 font-bold text-sm mb-8 backdrop-blur-sm animate-pulse-slow">
                                 <Rocket className="w-4 h-4" />
-                                <span>Prochaine session : Janvier 2026</span>
+                                <span>Janvier 2026</span>
                             </div>
 
                             <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 font-display tracking-tight leading-tight">
@@ -240,8 +240,8 @@ const Home: React.FC = () => {
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
                             {[
                                 { label: "Jours de Challenge", value: "15" },
-                                { label: "Participants", value: "500+" },
-                                { label: "Contenus Créés", value: "12k+" },
+                                { label: "Participants", value: "50+" },
+                                { label: "Contenus Créés", value: "100+" },
                                 { label: "Impact", value: "Infini" }
                             ].map((stat, idx) => (
                                 <div key={idx}>
@@ -262,7 +262,7 @@ const Home: React.FC = () => {
                         <span className="text-gray-500 font-bold">Marathon Challenge</span>
                     </div>
                     <p className="text-gray-600 text-sm">
-                        &copy; 2026 Tous droits réservés. Propulsé par l'ambition.
+                        &copy; 2026 Tous droits réservés. Propulsé par l'équipe Marathon Challenge.
                     </p>
                 </div>
             </footer>

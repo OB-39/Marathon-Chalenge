@@ -18,6 +18,7 @@ import { Trophy, Lock, CheckCircle2, Clock, XCircle, Bell } from 'lucide-react';
 import SubmissionsSection from '../components/SubmissionsSection';
 import StatisticsSection from '../components/StatisticsSection';
 import PrivateMessagesSection from '../components/PrivateMessagesSection';
+import DeadlineCountdown from '../components/DeadlineCountdown';
 
 const Dashboard: React.FC = () => {
     const navigate = useNavigate();
@@ -374,6 +375,46 @@ const Dashboard: React.FC = () => {
                                 />
                             </div>
 
+                            {/* Deadline Banner - Jour Actif */}
+                            {(() => {
+                                const activeDay = challengeDays.find(day => {
+                                    const status = getDayStatus(day);
+                                    const submission = getSubmissionForDay(day.day_number);
+                                    return status === 'active' && !submission && day.deadline;
+                                });
+
+                                if (!activeDay) return null;
+
+                                return (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: -20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="mb-8"
+                                    >
+                                        <div className="glass-strong rounded-2xl p-6 border border-blue-500/30 bg-gradient-to-r from-blue-500/10 to-purple-500/10">
+                                            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                                                <div className="flex-1">
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                                                        <h3 className="text-lg font-bold text-white">
+                                                            Jour {activeDay.day_number} en cours : {activeDay.theme_title}
+                                                        </h3>
+                                                    </div>
+                                                    <p className="text-sm text-gray-400">
+                                                        Soumettez votre post avant la deadline pour gagner des points !
+                                                    </p>
+                                                </div>
+                                                <div className="w-full md:w-auto">
+                                                    <DeadlineCountdown
+                                                        deadline={activeDay.deadline!}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                );
+                            })()}
+
                             {/* Challenge Days Grid */}
                             <div>
                                 <h2 className="text-2xl font-bold text-white mb-6">
@@ -462,6 +503,15 @@ const Dashboard: React.FC = () => {
                                                             <p className="text-sm text-gray-400 leading-relaxed line-clamp-2">
                                                                 {day.description}
                                                             </p>
+
+                                                            {/* Countdown pour les jours actifs */}
+                                                            {status === 'active' && !submission && day.deadline && (
+                                                                <div className="pt-3">
+                                                                    <DeadlineCountdown
+                                                                        deadline={day.deadline}
+                                                                    />
+                                                                </div>
+                                                            )}
 
                                                             {submission && (
                                                                 <div className="pt-2 border-t border-slate-700">
