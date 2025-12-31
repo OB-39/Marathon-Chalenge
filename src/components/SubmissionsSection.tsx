@@ -1,15 +1,59 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle2, Clock, XCircle, Calendar, Award } from 'lucide-react';
+import { CheckCircle2, Clock, XCircle, Calendar, Award, Trash2 } from 'lucide-react';
 import type { Submission } from '../types/database';
 import Badge from './ui/Badge';
+import { supabase } from '../lib/supabase';
+import Button from './ui/Button';
 
 interface SubmissionsSectionProps {
     submissions: Submission[];
+    onDelete?: () => void; // Callback pour rafraîchir après suppression
 }
 
-const SubmissionsSection: React.FC<SubmissionsSectionProps> = ({ submissions }) => {
+const SubmissionsSection: React.FC<SubmissionsSectionProps> = ({ submissions, onDelete }) => {
     const sortedSubmissions = [...submissions].sort((a, b) => b.day_number - a.day_number);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
+
+    const handleDelete = async (submission: Submission) => {
+        // Vérifier que le statut est bien "pending"
+        if (submission.status !== 'pending') {
+            alert('Vous ne pouvez supprimer que les soumissions en attente de validation.');
+            return;
+        }
+
+        // Demander confirmation
+        const confirmed = window.confirm(
+            `Êtes-vous sûr de vouloir supprimer votre soumission du Jour ${submission.day_number} ?\n\nCette action est irréversible.`
+        );
+
+        if (!confirmed) return;
+
+        setDeletingId(submission.id);
+
+        try {
+            const { error } = await supabase
+                .from('submissions')
+                .delete()
+                .eq('id', submission.id)
+                .eq('status', 'pending'); // Double vérification côté serveur
+
+            if (error) {
+                console.error('Error deleting submission:', error);
+                throw error;
+            }
+
+            // Notifier le parent pour rafraîchir la liste
+            if (onDelete) {
+                onDelete();
+            }
+        } catch (error) {
+            console.error('Failed to delete submission:', error);
+            alert('Erreur lors de la suppression. Veuillez réessayer.');
+        } finally {
+            setDeletingId(null);
+        }
+    };
 
     const getStatusIcon = (status: string) => {
         switch (status) {
@@ -126,6 +170,23 @@ const SubmissionsSection: React.FC<SubmissionsSectionProps> = ({ submissions }) 
                                             <p className="text-xs text-gray-300 italic">
                                                 "{submission.feedback}"
                                             </p>
+                                        </div>
+                                    )}
+
+                                    {/* Delete Button - Only for pending submissions */}
+                                    {submission.status === 'pending' && (
+                                        <div className="mt-3 pt-3 border-t border-white/10">
+                                            <Button
+                                                variant="danger"
+                                                size="sm"
+                                                onClick={() => handleDelete(submission)}
+                                                isLoading={deletingId === submission.id}
+                                                disabled={deletingId === submission.id}
+                                                className="w-full sm:w-auto"
+                                            >
+                                                <Trash2 className="w-4 h-4 mr-2" />
+                                                Supprimer cette soumission
+                                            </Button>
                                         </div>
                                     )}
                                 </div>

@@ -1,0 +1,23 @@
+name: Process Daily Deadlines
+
+# Exécuter toutes les heures
+on:
+  schedule:
+    - cron: '0 * * * *'  # Toutes les heures à la minute 0
+  
+  # Permet aussi l'exécution manuelle
+  workflow_dispatch:
+
+jobs:
+  process-deadlines:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Call Supabase Edge Function
+        run: |
+          curl -X POST ${{ secrets.SUPABASE_FUNCTION_URL }} \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Content-Type: application/json"
+        
+      - name: Log completion
+        run: echo "✅ Deadline processing completed at $(date)"

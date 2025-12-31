@@ -31,6 +31,7 @@ export interface Submission {
     score_awarded: number | null;
     rejection_comment?: string;
     feedback?: string; // Alias pour rejection_comment
+    missed_deadline?: boolean; // Indique si la deadline a été manquée
     submitted_at?: string; // Alias pour created_at
     created_at?: string;
     updated_at?: string;
@@ -56,6 +57,9 @@ export interface ChallengeDay {
     theme_title: string;
     description: string;
     is_active: boolean;
+    start_date?: string; // Date de début du jour
+    deadline?: string;   // Date limite de soumission (start_date + 29h)
+    is_expired?: boolean; // Indique si la deadline est passée
     created_at?: string;
 }
 

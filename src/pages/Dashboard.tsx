@@ -500,7 +500,7 @@ const Dashboard: React.FC = () => {
                             exit={{ opacity: 0, y: -10 }}
                             transition={{ duration: 0.2 }}
                         >
-                            <SubmissionsSection submissions={submissions} />
+                            <SubmissionsSection submissions={submissions} onDelete={fetchData} />
                         </motion.div>
                     )}
 
