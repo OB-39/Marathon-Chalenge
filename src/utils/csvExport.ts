@@ -73,7 +73,7 @@ export const exportSubmissions = async (supabase: any) => {
             .from('submissions')
             .select(`
                 *,
-                profile:profiles(full_name, email, university)
+                profile:profiles!submissions_user_id_fkey(full_name, email, university)
             `)
             .order('created_at', { ascending: false });
 

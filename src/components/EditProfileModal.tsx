@@ -49,13 +49,6 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onClose, on
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
-        // Vérifier la session avant de soumettre
-        if (!hasValidSession) {
-            alert('Vous devez vous connecter avec Google pour modifier votre profil.');
-            return;
-        }
-
         setLoading(true);
 
         try {
@@ -76,26 +69,51 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onClose, on
                 }
 
                 const { data } = supabase.storage.from('avatars').getPublicUrl(fileName);
-                avatarUrl = data.publicUrl;
+                // Ajouter un timestamp pour forcer le rafraîchissement du cache
+                avatarUrl = `${data.publicUrl}?t=${Date.now()}`;
             }
 
-            // Mettre à jour le profil
-            const { error: updateError } = await supabase
-                .from('profiles')
-                .update({
-                    phone_number: formData.phoneNumber,
-                    university: formData.university,
-                    bio: formData.bio || null,
-                    avatar_url: avatarUrl,
-                })
-                .eq('id', user?.id);
+            // Choisir la méthode de mise à jour selon le type de connexion
+            if (hasValidSession) {
+                // Utilisateur avec session OAuth - Mise à jour directe
+                const { error: updateError } = await supabase
+                    .from('profiles')
+                    .update({
+                        phone_number: formData.phoneNumber,
+                        university: formData.university,
+                        bio: formData.bio || null,
+                        avatar_url: avatarUrl,
+                    })
+                    .eq('id', user?.id);
 
-            if (updateError) {
-                console.error('Update error:', updateError);
-                if (updateError.message.includes('row-level security')) {
-                    throw new Error('Erreur de sécurité: Veuillez vous reconnecter avec Google.');
+                if (updateError) {
+                    console.error('Update error:', updateError);
+                    throw new Error(`Erreur de mise à jour: ${updateError.message}`);
                 }
-                throw new Error(`Erreur de mise à jour: ${updateError.message}`);
+            } else {
+                // Utilisateur Quick Login - Utiliser l'Edge Function
+                const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/update-profile`;
+                const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+                const response = await fetch(functionUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${anonKey}`
+                    },
+                    body: JSON.stringify({
+                        userId: user?.id,
+                        phoneNumber: formData.phoneNumber,
+                        university: formData.university,
+                        bio: formData.bio || null,
+                        avatarUrl: avatarUrl
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Erreur de mise à jour');
+                }
             }
 
             await refreshProfile();
@@ -113,28 +131,6 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onClose, on
     return (
         <Modal isOpen={isOpen} onClose={onClose} title="Modifier mon profil" size="lg">
             <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Avertissement pour les utilisateurs sans session valide */}
-                {!hasValidSession && (
-                    <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-                        <div className="flex gap-3">
-                            <div className="flex-shrink-0">
-                                <svg className="w-5 h-5 text-yellow-600 dark:text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                                </svg>
-                            </div>
-                            <div className="flex-1">
-                                <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-                                    Connexion requise
-                                </h3>
-                                <p className="mt-1 text-sm text-yellow-700 dark:text-yellow-300">
-                                    Pour modifier votre profil et télécharger une photo, vous devez vous connecter avec Google.
-                                    La connexion rapide ne permet pas ces modifications pour des raisons de sécurité.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
                 {/* Photo de profil */}
                 <div>
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
@@ -153,13 +149,12 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onClose, on
                             </div>
                         )}
 
-                        <label className={hasValidSession ? "cursor-pointer" : "cursor-not-allowed opacity-50"}>
+                        <label className="cursor-pointer">
                             <input
                                 type="file"
                                 accept="image/jpeg,image/png,image/webp"
                                 onChange={handlePhotoChange}
                                 className="hidden"
-                                disabled={!hasValidSession}
                             />
                             <div className="px-4 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors flex items-center gap-2 text-slate-700 dark:text-slate-200 text-sm font-medium">
                                 <Upload className="w-4 h-4" />
@@ -181,9 +176,8 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onClose, on
                             type="tel"
                             value={formData.phoneNumber}
                             onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-                            className="w-full pl-11 pr-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full pl-11 pr-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                             placeholder="+229 XX XX XX XX"
-                            disabled={!hasValidSession}
                         />
                     </div>
                 </div>
@@ -199,9 +193,8 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onClose, on
                             type="text"
                             value={formData.university}
                             onChange={(e) => setFormData({ ...formData, university: e.target.value })}
-                            className="w-full pl-11 pr-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full pl-11 pr-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                             placeholder="Ex: Université d'Abomey-Calavi"
-                            disabled={!hasValidSession}
                         />
                     </div>
                 </div>
@@ -216,9 +209,8 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onClose, on
                         value={formData.bio}
                         onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
                         rows={4}
-                        className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent transition-all resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent transition-all resize-none"
                         placeholder="Parlez-nous de vous..."
-                        disabled={!hasValidSession}
                     />
                 </div>
 
@@ -227,7 +219,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onClose, on
                     <Button type="button" variant="secondary" onClick={onClose}>
                         Annuler
                     </Button>
-                    <Button type="submit" isLoading={loading} disabled={!hasValidSession}>
+                    <Button type="submit" isLoading={loading}>
                         Enregistrer les modifications
                     </Button>
                 </div>

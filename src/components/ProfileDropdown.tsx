@@ -40,6 +40,7 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ onEditProfile }) => {
                 {/* Avatar */}
                 {profile?.avatar_url ? (
                     <img
+                        key={profile.avatar_url}
                         src={profile.avatar_url}
                         alt={profile.full_name || 'User'}
                         className="w-10 h-10 rounded-full object-cover border-2 border-blue-500/30 shadow-sm"

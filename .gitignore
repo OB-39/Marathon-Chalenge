@@ -27,3 +27,10 @@ dist-ssr
 .env
 .env.local
 .env.production
+
+# AI Agent & Workspace config
+.agent/
+.gemini/
+.history/
+*.pdf
+*.csv

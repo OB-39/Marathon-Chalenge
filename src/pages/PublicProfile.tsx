@@ -146,8 +146,26 @@ const PublicProfile: React.FC = () => {
                             <h1 className="text-3xl font-bold text-white mb-2 font-display">
                                 {profile.full_name || profile.email}
                             </h1>
+
+                            {/* University */}
+                            {profile.university && (
+                                <div className="flex items-center gap-2 justify-center md:justify-start mb-4 text-sm">
+                                    <div className="flex items-center gap-2 text-gray-300">
+                                        <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                        </svg>
+                                        <span className="font-medium">{profile.university}</span>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Bio - Formatted as block with line breaks */}
                             {profile.bio && (
-                                <p className="text-gray-300 mb-4">{profile.bio}</p>
+                                <div className="text-gray-300 mb-4 leading-relaxed max-w-2xl mx-auto md:mx-0">
+                                    <p className="whitespace-pre-line">
+                                        {profile.bio}
+                                    </p>
+                                </div>
                             )}
 
                             {/* Social Links */}

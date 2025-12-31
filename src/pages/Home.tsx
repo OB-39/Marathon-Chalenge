@@ -47,7 +47,7 @@ const Home: React.FC = () => {
             {/* Nav */}
             <nav className="relative z-50 max-w-7xl mx-auto px-6 py-6 flex justify-between items-center">
                 <div className="flex items-center gap-2">
-                    <div className="w-10 h-10 rounded-xl overflow-hidden shadow-lg glow-blue border border-white/10">
+                    <div className="w-14 h-14 rounded-xl overflow-hidden shadow-lg glow-blue border border-white/10">
                         <img src="/logo.png" className="w-full h-full object-cover" alt="Logo" />
                     </div>
                     <span className="text-xl font-bold text-white font-display hidden sm:inline">Marathon Challenge</span>
@@ -126,32 +126,32 @@ const Home: React.FC = () => {
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
                             transition={{ duration: 0.6, delay: 0.2 }}
-                            className="hidden md:block"
+                            className="mt-8 md:mt-0"
                         >
-                            <div className="glass-strong rounded-[2.5rem] p-10 border border-white/10 relative group">
+                            <div className="glass-strong rounded-[2.5rem] p-6 md:p-10 border border-white/10 relative group">
                                 <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-purple-600 rounded-[2.6rem] blur opacity-20 group-hover:opacity-40 transition-opacity" />
-                                <div className="relative space-y-8">
-                                    <div className="flex items-center gap-6">
+                                <div className="relative space-y-6 md:space-y-8">
+                                    <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
                                         {profile?.avatar_url ? (
-                                            <img src={profile.avatar_url} className="w-24 h-24 rounded-full border-4 border-blue-500/30 object-cover shadow-2xl" alt="" />
+                                            <img src={profile.avatar_url} className="w-40 h-40 sm:w-32 sm:h-32 md:w-32 md:h-32 rounded-full border-4 border-blue-500/30 object-cover shadow-2xl" alt="" />
                                         ) : (
-                                            <div className="w-24 h-24 rounded-full bg-slate-800 flex items-center justify-center border-4 border-white/10 shadow-2xl">
-                                                <LayoutDashboard className="w-10 h-10 text-gray-600" />
+                                            <div className="w-40 h-40 sm:w-32 sm:h-32 md:w-32 md:h-32 rounded-full bg-slate-800 flex items-center justify-center border-4 border-white/10 shadow-2xl">
+                                                <LayoutDashboard className="w-16 h-16 sm:w-12 sm:h-12 md:w-12 md:h-12 text-gray-600" />
                                             </div>
                                         )}
-                                        <div>
+                                        <div className="text-center sm:text-left">
                                             <h3 className="text-2xl font-black text-white">{profile?.full_name}</h3>
                                             <p className="text-gray-400 font-medium">Participant Élite</p>
                                         </div>
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div className="bg-white/5 rounded-2xl p-6 border border-white/5">
-                                            <p className="text-3xl font-black text-blue-400 mb-1">{profile?.total_points || 0}</p>
+                                        <div className="bg-white/5 rounded-2xl p-4 md:p-6 border border-white/5">
+                                            <p className="text-2xl md:text-3xl font-black text-blue-400 mb-1">{profile?.total_points || 0}</p>
                                             <p className="text-xs uppercase tracking-widest text-gray-500 font-bold">Points</p>
                                         </div>
-                                        <div className="bg-white/5 rounded-2xl p-6 border border-white/5">
-                                            <p className="text-3xl font-black text-purple-400 mb-1">#--</p>
+                                        <div className="bg-white/5 rounded-2xl p-4 md:p-6 border border-white/5">
+                                            <p className="text-2xl md:text-3xl font-black text-purple-400 mb-1">#--</p>
                                             <p className="text-xs uppercase tracking-widest text-gray-500 font-bold">Rang</p>
                                         </div>
                                     </div>
@@ -211,28 +211,31 @@ const Home: React.FC = () => {
                     </div>
                 )}
 
-                {/* Features Grid - Always visible or show more stats if logged in */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-24 text-left">
-                    {features.map((feature, idx) => (
-                        <motion.div
-                            key={idx}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.2 + idx * 0.1 }}
-                            className="bg-white/5 border border-white/10 p-6 rounded-2xl hover:bg-white/10 transition-colors group"
-                        >
-                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-colors ${feature.color === 'blue' ? 'bg-blue-500/20 text-blue-400 group-hover:bg-blue-500 group-hover:text-white' :
-                                feature.color === 'yellow' ? 'bg-yellow-500/20 text-yellow-400 group-hover:bg-yellow-500 group-hover:text-white' :
-                                    feature.color === 'green' ? 'bg-green-500/20 text-green-400 group-hover:bg-green-500 group-hover:text-white' :
-                                        'bg-purple-500/20 text-purple-400 group-hover:bg-purple-500 group-hover:text-white'
-                                }`}>
-                                <feature.icon className="w-6 h-6" />
-                            </div>
-                            <h3 className="text-xl font-bold text-white mb-2">{feature.title}</h3>
-                            <p className="text-gray-400 text-sm leading-relaxed">{feature.description}</p>
-                        </motion.div>
-                    ))}
-                </div>
+
+                {/* Features Grid - Only visible for non-logged-in users */}
+                {!user && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-24 text-left">
+                        {features.map((feature, idx) => (
+                            <motion.div
+                                key={idx}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.2 + idx * 0.1 }}
+                                className="bg-white/5 border border-white/10 p-6 rounded-2xl hover:bg-white/10 transition-colors group"
+                            >
+                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-colors ${feature.color === 'blue' ? 'bg-blue-500/20 text-blue-400 group-hover:bg-blue-500 group-hover:text-white' :
+                                    feature.color === 'yellow' ? 'bg-yellow-500/20 text-yellow-400 group-hover:bg-yellow-500 group-hover:text-white' :
+                                        feature.color === 'green' ? 'bg-green-500/20 text-green-400 group-hover:bg-green-500 group-hover:text-white' :
+                                            'bg-purple-500/20 text-purple-400 group-hover:bg-purple-500 group-hover:text-white'
+                                    }`}>
+                                    <feature.icon className="w-6 h-6" />
+                                </div>
+                                <h3 className="text-xl font-bold text-white mb-2">{feature.title}</h3>
+                                <p className="text-gray-400 text-sm leading-relaxed">{feature.description}</p>
+                            </motion.div>
+                        ))}
+                    </div>
+                )}
 
                 {/* Social Proof / Stats */}
                 {!user && (

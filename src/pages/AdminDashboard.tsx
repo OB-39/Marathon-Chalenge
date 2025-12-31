@@ -10,10 +10,9 @@ import type { Submission, Announcement, Profile } from '../types/database';
 import Badge from '../components/ui/Badge';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
-import ExportButton from '../components/ExportButton';
 import MessageModal from '../components/MessageModal';
-import { exportSubmissionsToPDF } from '../utils/pdfExport';
-import { Download } from 'lucide-react';
+import { exportSubmissionsToPDF, exportDailyReportToPDF } from '../utils/pdfExport';
+import { Download, FileText } from 'lucide-react';
 
 const AdminDashboard: React.FC = () => {
     const { profile, signOut } = useAuth();
@@ -298,6 +297,43 @@ const AdminDashboard: React.FC = () => {
         }
     };
 
+    const generateDailyReport = async () => {
+        setIsExportingPDF(true);
+        try {
+            // Fetch all submissions
+            const { data: submissionsData, error: subError } = await supabase
+                .from('submissions')
+                .select(`
+                    *,
+                    profile: profiles!submissions_user_id_fkey(*)
+                `)
+                .order('created_at', { ascending: false });
+
+            if (subError) throw subError;
+
+            // Fetch all profiles
+            const { data: profilesData, error: profError } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('role', 'student')
+                .order('total_points', { ascending: false });
+
+            if (profError) throw profError;
+
+            // Generate PDF
+            exportDailyReportToPDF({
+                submissions: submissionsData as any || [],
+                profiles: profilesData || [],
+                date: new Date()
+            });
+        } catch (error) {
+            console.error('Error generating daily report:', error);
+            alert('Erreur lors de la génération du rapport journalier');
+        } finally {
+            setIsExportingPDF(false);
+        }
+    };
+
     if (loading) {
         return (
             <div className="min-h-screen bg-[#0F172A] flex items-center justify-center p-4">
@@ -341,7 +377,22 @@ const AdminDashboard: React.FC = () => {
 
                         {/* Desktop Actions */}
                         <div className="hidden md:flex items-center gap-4">
-                            <ExportButton type="submissions" />
+                            <Button
+                                variant="secondary"
+                                onClick={generateDailyReport}
+                                isLoading={isExportingPDF}
+                                className="bg-blue-500/10 text-blue-400 border-blue-500/20 hover:bg-blue-500/20"
+                            >
+                                <FileText className="w-4 h-4 mr-2" /> Rapport Journalier
+                            </Button>
+                            <Button
+                                variant="secondary"
+                                onClick={fetchSubmissionsForPDF}
+                                isLoading={isExportingPDF}
+                                className="bg-orange-500/10 text-orange-400 border-orange-500/20 hover:bg-orange-500/20"
+                            >
+                                <Download className="w-4 h-4 mr-2" /> Export PDF
+                            </Button>
                             <div className="h-6 w-[1px] bg-white/10"></div>
                             <Button variant="ghost" onClick={handleLogout} className="text-red-400 hover:text-red-300 hover:bg-red-500/10 font-semibold">
                                 <LogOut className="w-4 h-4 mr-2" /> Déconnexion
@@ -360,7 +411,22 @@ const AdminDashboard: React.FC = () => {
                     {/* Mobile Menu */}
                     {mobileMenuOpen && (
                         <div className="md:hidden mt-4 pt-4 border-t border-white/10 space-y-2">
-                            <ExportButton type="submissions" />
+                            <Button
+                                variant="secondary"
+                                onClick={generateDailyReport}
+                                isLoading={isExportingPDF}
+                                className="w-full bg-blue-500/10 text-blue-400 border-blue-500/20 hover:bg-blue-500/20 justify-start"
+                            >
+                                <FileText className="w-4 h-4 mr-2" /> Rapport Journalier
+                            </Button>
+                            <Button
+                                variant="secondary"
+                                onClick={fetchSubmissionsForPDF}
+                                isLoading={isExportingPDF}
+                                className="w-full bg-orange-500/10 text-orange-400 border-orange-500/20 hover:bg-orange-500/20 justify-start"
+                            >
+                                <Download className="w-4 h-4 mr-2" /> Export PDF Soumissions
+                            </Button>
                             <Button
                                 variant="ghost"
                                 onClick={handleLogout}
@@ -399,16 +465,18 @@ const AdminDashboard: React.FC = () => {
                                 <button
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id as any)}
-                                    className={`flex - 1 min - w - [80px] md: min - w - 0 px - 3 md: px - 6 py - 3 md: py - 4 text - xs md: text - sm font - medium text - center transition - colors relative ${activeTab === tab.id
-                                            ? `text-${tab.color}-400 bg-${tab.color}-500/10 border-b-2 border-${tab.color}-500`
-                                            : 'text-gray-400 hover:text-gray-300 hover:bg-white/5'
-                                        } `}
+                                    className={`flex-1 min-w-[100px] md:min-w-0 px-4 md:px-6 py-4 md:py-4 text-xs md:text-sm font-medium text-center transition-colors relative ${activeTab === tab.id
+                                        ? `text-${tab.color}-400 bg-${tab.color}-500/10 border-b-2 border-${tab.color}-500`
+                                        : 'text-gray-400 hover:text-gray-300 hover:bg-white/5'
+                                        }`}
                                 >
-                                    <div className="flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2">
-                                        <tab.icon className="w-4 h-4" />
-                                        <span className="hidden md:inline">{tab.label} ({tab.count})</span>
-                                        <span className="md:hidden text-[10px]">{tab.shortLabel}</span>
-                                        <span className="md:hidden text-[10px] font-bold">({tab.count})</span>
+                                    <div className="flex flex-col items-center justify-center gap-2">
+                                        <tab.icon className="w-5 h-5 md:w-5 md:h-5" />
+                                        <div className="flex flex-col items-center gap-0.5">
+                                            <span className="hidden md:inline text-sm font-semibold">{tab.label}</span>
+                                            <span className="md:hidden text-xs font-semibold">{tab.shortLabel}</span>
+                                            <span className="text-xs font-bold opacity-75">({tab.count})</span>
+                                        </div>
                                     </div>
                                 </button>
                             ))}
@@ -586,8 +654,8 @@ const AdminDashboard: React.FC = () => {
                                                                 type="button"
                                                                 onClick={() => setNewAnnouncement({ ...newAnnouncement, type: item.id as any })}
                                                                 className={`flex items - center justify - center gap - 2 p - 2 md: p - 3 rounded - lg md: rounded - xl border transition - all text - xs md: text - sm ${newAnnouncement.type === item.id
-                                                                        ? 'bg-purple-500/20 border-purple-500 text-purple-400'
-                                                                        : 'border-white/10 text-gray-400 hover:bg-white/5'
+                                                                    ? 'bg-purple-500/20 border-purple-500 text-purple-400'
+                                                                    : 'border-white/10 text-gray-400 hover:bg-white/5'
                                                                     } `}
                                                             >
                                                                 <item.icon className="w-3 h-3 md:w-4 md:h-4" />
