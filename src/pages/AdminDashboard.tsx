@@ -11,6 +11,7 @@ import Badge from '../components/ui/Badge';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import MessageModal from '../components/MessageModal';
+import BroadcastMessageModal from '../components/BroadcastMessageModal';
 import { exportSubmissionsToPDF, exportDailyReportToPDF } from '../utils/pdfExport';
 import { Download, FileText } from 'lucide-react';
 
@@ -43,6 +44,7 @@ const AdminDashboard: React.FC = () => {
     const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
     const [messageTarget, setMessageTarget] = useState<{ id: string; name: string } | null>(null);
     const [isExportingPDF, setIsExportingPDF] = useState(false);
+    const [showBroadcastModal, setShowBroadcastModal] = useState(false);
 
 
     const handleLogout = async () => {
@@ -633,6 +635,54 @@ const AdminDashboard: React.FC = () => {
 
                         {activeTab === 'communications' && (
                             <div className="p-4 md:p-6 space-y-6 md:space-y-8">
+                                {/* Section Message Groupé */}
+                                <div className="glass-panel rounded-xl md:rounded-2xl p-4 md:p-6 border border-blue-500/30 hover-glow transition-all">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div>
+                                            <h3 className="text-base md:text-lg font-semibold text-white flex items-center gap-2">
+                                                <MessageSquare className="w-4 h-4 md:w-5 md:h-5 text-blue-400" />
+                                                Message groupé aux candidats
+                                            </h3>
+                                            <p className="text-xs text-gray-400 mt-1">
+                                                Envoyer un message ciblé à plusieurs candidats à la fois
+                                            </p>
+                                        </div>
+                                        <Button
+                                            onClick={() => setShowBroadcastModal(true)}
+                                            className="btn-primary-neo"
+                                        >
+                                            <Send className="w-4 h-4 mr-2" />
+                                            <span className="hidden md:inline">Nouveau message groupé</span>
+                                            <span className="md:hidden">Message</span>
+                                        </Button>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
+                                        <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <Users className="w-4 h-4 text-blue-400" />
+                                                <span className="text-xs font-semibold text-blue-300">Tous les candidats</span>
+                                            </div>
+                                            <p className="text-xs text-gray-400">Annonces générales</p>
+                                        </div>
+                                        <div className="p-3 bg-orange-500/10 border border-orange-500/20 rounded-lg">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <Bell className="w-4 h-4 text-orange-400" />
+                                                <span className="text-xs font-semibold text-orange-300">En retard</span>
+                                            </div>
+                                            <p className="text-xs text-gray-400">Rappels de deadline</p>
+                                        </div>
+                                        <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <CheckCircle2 className="w-4 h-4 text-green-400" />
+                                                <span className="text-xs font-semibold text-green-300">Ayant validé</span>
+                                            </div>
+                                            <p className="text-xs text-gray-400">Félicitations</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Section Publication Leaderboard */}
                                 <div className="glass-panel rounded-xl md:rounded-2xl p-4 md:p-6 border border-white/10">
                                     <h3 className="text-base md:text-lg font-semibold text-white mb-4 md:mb-6 flex items-center gap-2">
                                         <Send className="w-4 h-4 md:w-5 md:h-5 text-purple-400" /> Publier sur le Leaderboard
@@ -948,6 +998,12 @@ const AdminDashboard: React.FC = () => {
                     />
                 )
             }
+
+            {/* Broadcast Message Modal */}
+            <BroadcastMessageModal
+                isOpen={showBroadcastModal}
+                onClose={() => setShowBroadcastModal(false)}
+            />
         </div >
     );
 };
