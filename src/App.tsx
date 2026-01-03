@@ -10,6 +10,7 @@ import AdminLogin from './pages/AdminLogin';
 import PublicProfile from './pages/PublicProfile';
 import Home from './pages/Home';
 import Leaderboard from './pages/Leaderboard';
+import PostsGallery from './pages/PostsGallery';
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -167,6 +168,7 @@ function AppRoutes() {
       {/* Home and Leaderboard Routes */}
       <Route path="/" element={<Home />} />
       <Route path="/leaderboard" element={<Leaderboard />} />
+      <Route path="/posts" element={<PostsGallery />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

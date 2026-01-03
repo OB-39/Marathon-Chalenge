@@ -11,6 +11,11 @@ interface SubmissionsSectionProps {
     onDelete?: () => void; // Callback pour rafraîchir après suppression
 }
 
+// Helper function to get max score based on day number
+const getMaxScoreForDay = (dayNumber: number): number => {
+    return dayNumber >= 4 && dayNumber <= 15 ? 20 : 10;
+};
+
 const SubmissionsSection: React.FC<SubmissionsSectionProps> = ({ submissions, onDelete }) => {
     const sortedSubmissions = [...submissions].sort((a, b) => b.day_number - a.day_number);
     const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -159,7 +164,7 @@ const SubmissionsSection: React.FC<SubmissionsSectionProps> = ({ submissions, on
                                         <div className="flex items-center gap-2 mt-2">
                                             <Award className="w-4 h-4 text-yellow-400" />
                                             <span className="text-sm font-bold text-white">
-                                                Score: {submission.score_awarded}/10
+                                                Score: {submission.score_awarded}/{getMaxScoreForDay(submission.day_number)}
                                             </span>
                                         </div>
                                     )}

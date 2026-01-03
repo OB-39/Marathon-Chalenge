@@ -38,9 +38,12 @@ const BroadcastMessageModal: React.FC<BroadcastMessageModalProps> = ({ isOpen, o
 
         try {
             let recipientIds: string[] = [];
+            let targetType: 'all' | 'no_submission_today' | 'custom' = 'all';
+            let targetDayNumber: number | null = null;
 
             // Récupérer les destinataires selon le ciblage
             if (target === 'all') {
+                targetType = 'all';
                 // Tous les candidats
                 const { data, error: fetchError } = await supabase
                     .from('profiles')
@@ -52,6 +55,7 @@ const BroadcastMessageModal: React.FC<BroadcastMessageModalProps> = ({ isOpen, o
                 recipientIds = data?.map(p => p.id) || [];
 
             } else if (target === 'late') {
+                targetType = 'no_submission_today';
                 // Candidats en retard pour le jour en cours
                 // 1. Trouver le jour actif
                 const { data: activeDay, error: dayError } = await supabase
@@ -61,27 +65,18 @@ const BroadcastMessageModal: React.FC<BroadcastMessageModalProps> = ({ isOpen, o
                     .single();
 
                 if (dayError) throw dayError;
+                targetDayNumber = activeDay.day_number;
 
-                // 2. Trouver les candidats qui n'ont pas soumis
-                const { data: allStudents, error: studentsError } = await supabase
-                    .from('profiles')
-                    .select('id')
-                    .eq('role', 'student')
-                    .eq('is_registered', true);
+                // 2. Utiliser la fonction RPC
+                const { data: participants, error: participantsError } = await supabase
+                    .rpc('get_participants_without_submission', { target_day_number: activeDay.day_number });
 
-                if (studentsError) throw studentsError;
-
-                const { data: submissions, error: submissionsError } = await supabase
-                    .from('submissions')
-                    .select('user_id')
-                    .eq('day_number', activeDay.day_number);
-
-                if (submissionsError) throw submissionsError;
-
-                const submittedIds = new Set(submissions?.map(s => s.user_id) || []);
-                recipientIds = allStudents?.filter(s => !submittedIds.has(s.id)).map(s => s.id) || [];
+                if (participantsError) throw participantsError;
+                recipientIds = participants?.map((p: any) => p.user_id) || [];
 
             } else if (target === 'validated') {
+                targetType = 'custom';
+                targetDayNumber = selectedDay;
                 // Candidats ayant validé le jour spécifié
                 const { data, error: fetchError } = await supabase
                     .from('submissions')
@@ -90,7 +85,7 @@ const BroadcastMessageModal: React.FC<BroadcastMessageModalProps> = ({ isOpen, o
                     .eq('status', 'validated');
 
                 if (fetchError) throw fetchError;
-                recipientIds = data?.map(s => s.user_id) || [];
+                recipientIds = [...new Set(data?.map(s => s.user_id) || [])];
             }
 
             if (recipientIds.length === 0) {
@@ -99,20 +94,33 @@ const BroadcastMessageModal: React.FC<BroadcastMessageModalProps> = ({ isOpen, o
                 return;
             }
 
-            // Créer les messages pour chaque destinataire
-            const messages = recipientIds.map(recipientId => ({
-                sender_id: user.id,
-                receiver_id: recipientId,
-                content: message,
-                is_read: false,
-                created_at: new Date().toISOString()
+            // 1. Créer le broadcast
+            const { data: broadcast, error: broadcastError } = await supabase
+                .from('admin_broadcasts')
+                .insert({
+                    sender_id: user.id,
+                    title: target === 'all' ? 'Message à tous' : target === 'late' ? 'Rappel soumission' : `Message jour ${selectedDay}`,
+                    message: message.trim(),
+                    target_type: targetType,
+                    target_day: targetDayNumber,
+                    recipient_count: recipientIds.length
+                })
+                .select()
+                .single();
+
+            if (broadcastError) throw broadcastError;
+
+            // 2. Créer les entrées pour chaque destinataire
+            const recipients = recipientIds.map(recipientId => ({
+                broadcast_id: broadcast.id,
+                recipient_id: recipientId
             }));
 
-            const { error: insertError } = await supabase
-                .from('messages')
-                .insert(messages);
+            const { error: recipientsError } = await supabase
+                .from('broadcast_recipients')
+                .insert(recipients);
 
-            if (insertError) throw insertError;
+            if (recipientsError) throw recipientsError;
 
             setSuccess(`✅ Message envoyé à ${recipientIds.length} candidat(s) !`);
             setMessage('');
@@ -185,8 +193,8 @@ const BroadcastMessageModal: React.FC<BroadcastMessageModalProps> = ({ isOpen, o
                                     <button
                                         onClick={() => setTarget('all')}
                                         className={`p-4 rounded-xl border-2 transition-all ${target === 'all'
-                                                ? 'border-blue-500 bg-blue-500/10 shadow-lg ring-2 ring-blue-500/30'
-                                                : 'border-white/10 hover:border-white/20 hover:bg-white/5'
+                                            ? 'border-blue-500 bg-blue-500/10 shadow-lg ring-2 ring-blue-500/30'
+                                            : 'border-white/10 hover:border-white/20 hover:bg-white/5'
                                             }`}
                                     >
                                         <Users className={`w-6 h-6 mx-auto mb-2 ${target === 'all' ? 'text-blue-400' : 'text-gray-400'}`} />
@@ -199,8 +207,8 @@ const BroadcastMessageModal: React.FC<BroadcastMessageModalProps> = ({ isOpen, o
                                     <button
                                         onClick={() => setTarget('late')}
                                         className={`p-4 rounded-xl border-2 transition-all ${target === 'late'
-                                                ? 'border-orange-500 bg-orange-500/10 shadow-lg ring-2 ring-orange-500/30'
-                                                : 'border-white/10 hover:border-white/20 hover:bg-white/5'
+                                            ? 'border-orange-500 bg-orange-500/10 shadow-lg ring-2 ring-orange-500/30'
+                                            : 'border-white/10 hover:border-white/20 hover:bg-white/5'
                                             }`}
                                     >
                                         <Clock className={`w-6 h-6 mx-auto mb-2 ${target === 'late' ? 'text-orange-400' : 'text-gray-400'}`} />
@@ -213,8 +221,8 @@ const BroadcastMessageModal: React.FC<BroadcastMessageModalProps> = ({ isOpen, o
                                     <button
                                         onClick={() => setTarget('validated')}
                                         className={`p-4 rounded-xl border-2 transition-all ${target === 'validated'
-                                                ? 'border-green-500 bg-green-500/10 shadow-lg ring-2 ring-green-500/30'
-                                                : 'border-white/10 hover:border-white/20 hover:bg-white/5'
+                                            ? 'border-green-500 bg-green-500/10 shadow-lg ring-2 ring-green-500/30'
+                                            : 'border-white/10 hover:border-white/20 hover:bg-white/5'
                                             }`}
                                     >
                                         <CheckCircle className={`w-6 h-6 mx-auto mb-2 ${target === 'validated' ? 'text-green-400' : 'text-gray-400'}`} />

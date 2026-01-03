@@ -1,15 +1,42 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Rocket, Target, Users, TrendingUp, Trophy, ArrowRight, Zap, LayoutDashboard, ChevronRight, Star } from 'lucide-react';
+import { Rocket, Target, Users, TrendingUp, Trophy, ArrowRight, Zap, LayoutDashboard, Star, Eye } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import EditProfileModal from '../components/EditProfileModal';
 import ProfileDropdown from '../components/ProfileDropdown';
+import { supabase } from '../lib/supabase';
 
 const Home: React.FC = () => {
     const navigate = useNavigate();
     const { user, profile } = useAuth();
     const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+    const [userRank, setUserRank] = useState<number>(0);
+
+    useEffect(() => {
+        if (user) {
+            fetchUserRank();
+        }
+    }, [user]);
+
+    const fetchUserRank = async () => {
+        if (!user) return;
+        try {
+            const { data: allProfiles, error } = await supabase
+                .from('profiles')
+                .select('id, total_points')
+                .eq('role', 'student')
+                .eq('is_registered', true)
+                .order('total_points', { ascending: false });
+
+            if (error) throw error;
+
+            const rank = allProfiles?.findIndex(p => p.id === user.id) + 1 || 0;
+            setUserRank(rank);
+        } catch (error) {
+            console.error('Error fetching rank:', error);
+        }
+    };
 
     const features = [
         {
@@ -58,6 +85,13 @@ const Home: React.FC = () => {
                         className="text-gray-300 hover:text-white transition-colors font-medium text-sm hidden sm:block"
                     >
                         Classement
+                    </button>
+                    <button
+                        onClick={() => navigate('/posts')}
+                        className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors font-medium text-sm hidden sm:flex"
+                    >
+                        <Eye className="w-4 h-4" />
+                        Voir les Posts
                     </button>
                     {user ? (
                         <div className="flex items-center gap-4">
@@ -120,6 +154,17 @@ const Home: React.FC = () => {
                                     Voir mon rang
                                 </button>
                             </div>
+
+                            {/* Voir les Posts Button */}
+                            <div className="mt-6">
+                                <button
+                                    onClick={() => navigate('/posts')}
+                                    className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/30 text-green-400 rounded-xl font-semibold hover:bg-green-500/20 transition-all"
+                                >
+                                    <Eye className="w-5 h-5" />
+                                    Découvrir les Posts Validés
+                                </button>
+                            </div>
                         </motion.div>
 
                         <motion.div
@@ -151,17 +196,10 @@ const Home: React.FC = () => {
                                             <p className="text-xs uppercase tracking-widest text-gray-500 font-bold">Points</p>
                                         </div>
                                         <div className="bg-white/5 rounded-2xl p-4 md:p-6 border border-white/5">
-                                            <p className="text-2xl md:text-3xl font-black text-purple-400 mb-1">#--</p>
+                                            <p className="text-2xl md:text-3xl font-black text-purple-400 mb-1">#{userRank || '--'}</p>
                                             <p className="text-xs uppercase tracking-widest text-gray-500 font-bold">Rang</p>
                                         </div>
                                     </div>
-
-                                    <button
-                                        onClick={() => navigate('/dashboard')}
-                                        className="w-full py-4 bg-white/5 hover:bg-white/10 rounded-2xl text-white font-bold transition-all border border-white/10 flex items-center justify-center gap-2"
-                                    >
-                                        Accéder aux tâches <ChevronRight className="w-4 h-4" />
-                                    </button>
                                 </div>
                             </div>
                         </motion.div>
@@ -205,6 +243,17 @@ const Home: React.FC = () => {
                                 >
                                     <Trophy className="w-5 h-5 text-yellow-500" />
                                     Voir le Classement
+                                </button>
+                            </div>
+
+                            {/* Voir les Posts Button */}
+                            <div className="mt-6">
+                                <button
+                                    onClick={() => navigate('/posts')}
+                                    className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/30 text-green-400 rounded-xl font-semibold hover:bg-green-500/20 transition-all"
+                                >
+                                    <Eye className="w-5 h-5" />
+                                    Découvrir les Posts Validés
                                 </button>
                             </div>
                         </motion.div>

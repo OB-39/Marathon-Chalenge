@@ -19,6 +19,12 @@ import SubmissionsSection from '../components/SubmissionsSection';
 import StatisticsSection from '../components/StatisticsSection';
 import PrivateMessagesSection from '../components/PrivateMessagesSection';
 import DeadlineCountdown from '../components/DeadlineCountdown';
+import MessagesInbox from '../components/MessagesInbox';
+
+// Helper function to get max score based on day number
+const getMaxScoreForDay = (dayNumber: number): number => {
+    return dayNumber >= 4 && dayNumber <= 15 ? 20 : 10;
+};
 
 const Dashboard: React.FC = () => {
     const navigate = useNavigate();
@@ -31,6 +37,7 @@ const Dashboard: React.FC = () => {
     const [userRank, setUserRank] = useState<number>(0);
     const [totalParticipants, setTotalParticipants] = useState<number>(0);
     const [unreadMessagesCount, setUnreadMessagesCount] = useState<number>(0);
+    const [isMessagesInboxOpen, setIsMessagesInboxOpen] = useState(false);
 
     // Mobile menu states
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -92,9 +99,9 @@ const Dashboard: React.FC = () => {
         if (!user) return;
         try {
             const { count, error } = await supabase
-                .from('messages')
+                .from('broadcast_recipients')
                 .select('*', { count: 'exact', head: true })
-                .eq('receiver_id', user.id)
+                .eq('recipient_id', user.id)
                 .eq('is_read', false);
 
             if (error) {
@@ -118,8 +125,8 @@ const Dashboard: React.FC = () => {
                 .on('postgres_changes', {
                     event: '*',
                     schema: 'public',
-                    table: 'messages',
-                    filter: `receiver_id=eq.${user.id}`
+                    table: 'broadcast_recipients',
+                    filter: `recipient_id=eq.${user.id}`
                 }, () => {
                     fetchUnreadMessages();
                 })
@@ -266,12 +273,13 @@ const Dashboard: React.FC = () => {
 
                             {/* Desktop Notifications */}
                             <button
-                                onClick={() => setCurrentSection('messages')}
+                                onClick={() => setIsMessagesInboxOpen(true)}
                                 className="relative p-2 text-gray-400 hover:text-white transition-colors bg-white/5 rounded-xl border border-white/10"
+                                title={unreadMessagesCount > 0 ? `${unreadMessagesCount} message${unreadMessagesCount > 1 ? 's' : ''} non lu${unreadMessagesCount > 1 ? 's' : ''}` : 'Messages'}
                             >
                                 <Bell className="w-5 h-5" />
                                 {unreadMessagesCount > 0 && (
-                                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border-2 border-[#0F172A] animate-pulse">
+                                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold border-2 border-[#0F172A]">
                                         {unreadMessagesCount}
                                     </span>
                                 )}
@@ -518,7 +526,7 @@ const Dashboard: React.FC = () => {
                                                                     <Badge status={submission.status} />
                                                                     {submission.score_awarded !== null && (
                                                                         <span className="ml-2 text-sm font-semibold text-slate-300">
-                                                                            Score: {submission.score_awarded}/10
+                                                                            Score: {submission.score_awarded}/{getMaxScoreForDay(submission.day_number)}
                                                                         </span>
                                                                     )}
                                                                 </div>
@@ -605,6 +613,11 @@ const Dashboard: React.FC = () => {
                 onSuccess={() => {
                     fetchData();
                 }}
+            />
+
+            <MessagesInbox
+                isOpen={isMessagesInboxOpen}
+                onClose={() => setIsMessagesInboxOpen(false)}
             />
         </div>
     );

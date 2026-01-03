@@ -52,6 +52,11 @@ const AdminDashboard: React.FC = () => {
         window.location.href = '/';
     };
 
+    // Helper function to get max score based on day number
+    const getMaxScoreForDay = (dayNumber: number): number => {
+        return dayNumber >= 4 && dayNumber <= 15 ? 20 : 10;
+    };
+
     useEffect(() => {
         // Don't redirect if profile is still loading
         if (!profile) return;
@@ -589,7 +594,7 @@ const AdminDashboard: React.FC = () => {
                                                     </td>
                                                     <td className="px-6 py-4">
                                                         <div className="text-xs text-gray-400">{new Date(s.updated_at!).toLocaleDateString()}</div>
-                                                        <div className="text-sm font-bold text-purple-400">{s.score_awarded}/10</div>
+                                                        <div className="text-sm font-bold text-purple-400">{s.score_awarded}/{getMaxScoreForDay(s.day_number)}</div>
                                                     </td>
                                                     <td className="px-6 py-4"><Badge status={s.status} /></td>
                                                     <td className="px-6 py-4 text-right">
@@ -620,7 +625,7 @@ const AdminDashboard: React.FC = () => {
                                                     </div>
                                                     <div className="flex items-center gap-2 mt-2">
                                                         <Badge status={s.status} />
-                                                        <span className="text-sm font-bold text-purple-400">{s.score_awarded}/10</span>
+                                                        <span className="text-sm font-bold text-purple-400">{s.score_awarded}/{getMaxScoreForDay(s.day_number)}</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -945,12 +950,14 @@ const AdminDashboard: React.FC = () => {
                                 <img src={selectedSubmission.proof_image_url} alt="Proof" className="w-full rounded-xl border border-white/10 shadow-lg" />
                             )}
                             <div className="glass-panel rounded-xl md:rounded-2xl p-4 md:p-5 border border-white/10">
-                                <label className="block text-[10px] uppercase font-bold text-gray-500 mb-3">Notation (0-10)</label>
+                                <label className="block text-[10px] uppercase font-bold text-gray-500 mb-3">
+                                    Notation (0-{getMaxScoreForDay(selectedSubmission.day_number)})
+                                </label>
                                 <div className="flex items-center gap-4">
                                     <input
                                         type="range"
                                         min="0"
-                                        max="10"
+                                        max={getMaxScoreForDay(selectedSubmission.day_number)}
                                         value={score}
                                         onChange={e => setScore(Number(e.target.value))}
                                         className="flex-1 accent-purple-500"

@@ -17,6 +17,11 @@ interface DailyReportData {
     date: Date;
 }
 
+// Helper function to get max score based on day number
+const getMaxScoreForDay = (dayNumber: number): number => {
+    return dayNumber >= 4 && dayNumber <= 15 ? 20 : 10;
+};
+
 export const exportDailyReportToPDF = (data: DailyReportData) => {
     const doc = new jsPDF('p', 'mm', 'a4'); // Portrait orientation
     const { submissions, profiles, date } = data;
@@ -120,7 +125,7 @@ export const exportDailyReportToPDF = (data: DailyReportData) => {
 
         const tableData = todaySubmissions.map(s => {
             const statusEmoji = s.status === 'validated' ? 'Valide' : s.status === 'pending' ? 'Attente' : 'Refuse';
-            const score = s.score_awarded ? `${s.score_awarded}/10` : '-';
+            const score = s.score_awarded ? `${s.score_awarded}/${getMaxScoreForDay(s.day_number)}` : '-';
             return [
                 s.profile?.full_name || 'N/A',
                 `Jour ${s.day_number}`,
@@ -323,7 +328,7 @@ export const exportSubmissionsToPDF = (submissions: Submission[]) => {
         `Jour ${s.day_number}`,
         s.platform.toUpperCase(),
         s.status === 'validated' ? 'Valide' : s.status === 'pending' ? 'Attente' : 'Refuse',
-        s.score_awarded ? `${s.score_awarded}/10` : '-',
+        s.score_awarded ? `${s.score_awarded}/${getMaxScoreForDay(s.day_number)}` : '-',
         s.post_link,
         s.content_text || 'Pas de description'
     ]);
