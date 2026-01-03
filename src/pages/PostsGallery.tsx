@@ -6,11 +6,7 @@ import { supabase } from '../lib/supabase';
 import type { Submission } from '../types/database';
 import ProfileDropdown from '../components/ProfileDropdown';
 import { useAuth } from '../contexts/AuthContext';
-import {
-    getOptimizedImageUrl,
-    generateBlurPlaceholder,
-    getOptimalImageWidth
-} from '../utils/imageOptimization';
+import { getOptimizedImageUrl } from '../utils/imageOptimization';
 
 // Helper function to get max score based on day number
 const getMaxScoreForDay = (dayNumber: number): number => {
@@ -19,7 +15,7 @@ const getMaxScoreForDay = (dayNumber: number): number => {
 
 const PostsGallery: React.FC = () => {
     const navigate = useNavigate();
-    const { user, profile } = useAuth();
+    const { user } = useAuth();
     const [submissions, setSubmissions] = useState<Submission[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedDay, setSelectedDay] = useState<number | null>(null);
@@ -272,7 +268,7 @@ const PostsGallery: React.FC = () => {
                                         {submission.proof_image_url ? (
                                             <img
                                                 src={getOptimizedImageUrl(submission.proof_image_url, {
-                                                    width: getOptimalImageWidth(),
+                                                    width: 800,
                                                     quality: 80
                                                 })}
                                                 alt={`Post jour ${submission.day_number}`}

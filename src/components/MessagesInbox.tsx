@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, X, Mail, MailOpen, Trash2, Calendar } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Bell, X, Mail, MailOpen, Calendar } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import Button from './ui/Button';
 
 interface BroadcastMessage {
     id: string; // ID du broadcast_recipient
@@ -88,7 +87,7 @@ const MessagesInbox: React.FC<MessagesInboxProps> = ({ isOpen, onClose }) => {
         }
     };
 
-    const markAsRead = async (recipientId: string, broadcastId: string) => {
+    const markAsRead = async (recipientId: string) => {
         if (!user) return;
 
         try {
@@ -121,7 +120,7 @@ const MessagesInbox: React.FC<MessagesInboxProps> = ({ isOpen, onClose }) => {
     const handleMessageClick = (message: BroadcastMessage) => {
         setSelectedMessage(message);
         if (!message.is_read) {
-            markAsRead(message.id, message.broadcast_id);
+            markAsRead(message.id);
         }
     };
 

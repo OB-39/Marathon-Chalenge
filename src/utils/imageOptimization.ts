@@ -22,7 +22,7 @@ export const generateBlurPlaceholder = (width: number = 800, height: number = 60
 // Optimise l'URL d'une image (version simplifiée)
 export const getOptimizedImageUrl = (
     url: string | null,
-    options: {
+    _options: {
         width?: number;
         quality?: number;
         format?: 'webp' | 'jpeg' | 'png';
