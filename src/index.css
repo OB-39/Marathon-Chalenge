@@ -316,6 +316,10 @@ h6 {
     box-shadow: 0 0 20px rgba(139, 92, 246, 0.6), 0 0 40px rgba(139, 92, 246, 0.3);
   }
 
+  .glow-red {
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.6), 0 0 40px rgba(239, 68, 68, 0.3);
+  }
+
   /* Text Colors for Dark Mode */
   .text-primary-glow {
     color: #60a5fa;

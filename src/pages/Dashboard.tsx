@@ -465,13 +465,15 @@ const Dashboard: React.FC = () => {
                                                 >
                                                     <Card
                                                         variant="default"
-                                                        hover={status === 'active'}
-                                                        onClick={() => status === 'active' && setSelectedDay(day.day_number)}
+                                                        hover={status === 'active' || status === 'rejected'}
+                                                        onClick={() => (status === 'active' || status === 'rejected') && setSelectedDay(day.day_number)}
                                                         className={`relative overflow-hidden transition-all duration-300 ${status === 'locked'
                                                             ? 'opacity-40 grayscale cursor-not-allowed border-white/5'
                                                             : status === 'active'
                                                                 ? 'cursor-pointer border-blue-500/50 glow-blue ring-1 ring-blue-500/20'
-                                                                : 'border-white/10'
+                                                                : status === 'rejected'
+                                                                    ? 'cursor-pointer border-red-500/50 glow-red ring-1 ring-red-500/20'
+                                                                    : 'border-white/10'
                                                             }`}
                                                     >
                                                         {/* Status Badge */}
@@ -532,10 +534,17 @@ const Dashboard: React.FC = () => {
                                                                 </div>
                                                             )}
 
-                                                            {status === 'active' && !submission && (
+                                                            {(status === 'active' && !submission) && (
                                                                 <div className="pt-2">
                                                                     <p className="text-sm font-medium text-blue-400">
                                                                         Cliquez pour soumettre →
+                                                                    </p>
+                                                                </div>
+                                                            )}
+                                                            {status === 'rejected' && (
+                                                                <div className="pt-2">
+                                                                    <p className="text-sm font-medium text-red-400">
+                                                                        Cliquez pour resoumettre →
                                                                     </p>
                                                                 </div>
                                                             )}
@@ -599,6 +608,7 @@ const Dashboard: React.FC = () => {
                     isOpen={selectedDay !== null}
                     onClose={() => setSelectedDay(null)}
                     dayNumber={selectedDay}
+                    existingSubmission={selectedDay ? getSubmissionForDay(selectedDay) : undefined}
                     onSuccess={() => {
                         setSelectedDay(null);
                         fetchData();

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
+import { Submission } from '../types/database';
 import Modal from './ui/Modal';
 import Button from './ui/Button';
 import { Upload, Link as LinkIcon } from 'lucide-react';
@@ -10,6 +11,7 @@ interface SubmissionModalProps {
     onClose: () => void;
     dayNumber: number;
     onSuccess: () => void;
+    existingSubmission?: Submission;
 }
 
 const SubmissionModal: React.FC<SubmissionModalProps> = ({
@@ -17,6 +19,7 @@ const SubmissionModal: React.FC<SubmissionModalProps> = ({
     onClose,
     dayNumber,
     onSuccess,
+    existingSubmission,
 }) => {
     const { user } = useAuth();
     const [platform, setPlatform] = useState<'linkedin' | 'facebook' | 'instagram'>('linkedin');
@@ -25,6 +28,20 @@ const SubmissionModal: React.FC<SubmissionModalProps> = ({
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
+
+    useEffect(() => {
+        if (existingSubmission) {
+            setPlatform(existingSubmission.platform);
+            setPostLink(existingSubmission.post_link);
+            setContentText(existingSubmission.content_text || '');
+        } else {
+            // Reset fields if no existing submission (or new day selected)
+            setPlatform('linkedin');
+            setPostLink('');
+            setContentText('');
+            setImageFile(null);
+        }
+    }, [existingSubmission, isOpen]);
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -40,7 +57,7 @@ const SubmissionModal: React.FC<SubmissionModalProps> = ({
         setIsLoading(true);
 
         try {
-            let proofImageUrl = null;
+            let proofImageUrl = existingSubmission?.proof_image_url || null;
 
             // Upload image if provided
             if (imageFile) {
@@ -58,18 +75,36 @@ const SubmissionModal: React.FC<SubmissionModalProps> = ({
                 proofImageUrl = data.publicUrl;
             }
 
-            // Insert submission
-            const { error: insertError } = await supabase.from('submissions').insert({
-                user_id: user.id,
-                day_number: dayNumber,
-                platform,
-                content_text: contentText || null,
-                post_link: postLink,
-                proof_image_url: proofImageUrl,
-                status: 'pending',
-            });
+            if (existingSubmission) {
+                // Update existing submission
+                const { error: updateError } = await supabase
+                    .from('submissions')
+                    .update({
+                        platform,
+                        content_text: contentText || null,
+                        post_link: postLink,
+                        proof_image_url: proofImageUrl,
+                        status: 'pending', // Reset status to pending
+                        rejection_comment: null, // Clear previous rejection comment
+                    })
+                    .eq('id', existingSubmission.id);
 
-            if (insertError) throw insertError;
+                if (updateError) throw updateError;
+
+            } else {
+                // Insert new submission
+                const { error: insertError } = await supabase.from('submissions').insert({
+                    user_id: user.id,
+                    day_number: dayNumber,
+                    platform,
+                    content_text: contentText || null,
+                    post_link: postLink,
+                    proof_image_url: proofImageUrl,
+                    status: 'pending',
+                });
+
+                if (insertError) throw insertError;
+            }
 
             // Success - Show confirmation
             alert('✅ Soumission envoyée avec succès !\n\nVotre publication sera évaluée par un ambassadeur.');
@@ -85,11 +120,21 @@ const SubmissionModal: React.FC<SubmissionModalProps> = ({
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title={`Soumettre le Jour ${dayNumber}`} size="lg">
+        <Modal isOpen={isOpen} onClose={onClose} title={`Soumettez votre Jour ${dayNumber}`} size="lg">
             <form onSubmit={handleSubmit} className="space-y-6">
                 {error && (
                     <div className="bg-error-50 dark:bg-error-900/20 border border-error-200 dark:border-error-800 rounded-lg p-4">
                         <p className="text-sm text-error-700 dark:text-error-300">{error}</p>
+                    </div>
+                )}
+
+                {existingSubmission && existingSubmission.status === 'rejected' && (
+                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
+                        <h4 className="font-semibold text-red-700 dark:text-red-400 mb-1">Candidature précédente rejetée</h4>
+                        <p className="text-sm text-red-600 dark:text-red-300">
+                            {existingSubmission.rejection_comment || 'Aucun motif spécifié.'}
+                        </p>
+                        <p className="text-xs text-red-500/80 mt-2">Vous pouvez modifier votre soumission ci-dessous pour une nouvelle validation.</p>
                     </div>
                 )}
 
@@ -158,7 +203,7 @@ const SubmissionModal: React.FC<SubmissionModalProps> = ({
                 {/* Image Upload */}
                 <div>
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                        Preuve (capture d'écran)
+                        Preuve (Capture d'écran)
                     </label>
                     <div className="relative">
                         <input
@@ -175,7 +220,7 @@ const SubmissionModal: React.FC<SubmissionModalProps> = ({
                             <div className="text-center">
                                 <Upload className="w-8 h-8 text-slate-400 mx-auto mb-2" />
                                 <p className="text-sm text-slate-600 dark:text-slate-400">
-                                    {imageFile ? imageFile.name : 'Cliquez pour uploader une image'}
+                                    {imageFile ? imageFile.name : (existingSubmission?.proof_image_url ? 'Changer l\'image (Image existante conservée)' : 'Cliquez pour uploader une image')}
                                 </p>
                             </div>
                         </label>
@@ -188,7 +233,7 @@ const SubmissionModal: React.FC<SubmissionModalProps> = ({
                         Annuler
                     </Button>
                     <Button type="submit" isLoading={isLoading} className="flex-1">
-                        Soumettre
+                        {existingSubmission ? 'Renvoyer la soumission' : 'Soumettre'}
                     </Button>
                 </div>
             </form>
